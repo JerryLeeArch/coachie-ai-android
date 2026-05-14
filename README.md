@@ -6,13 +6,16 @@
 
 ## 현재 진행 상태
 
-- 현재 단계: 10주차 - 프로젝트 제안서 작성 단계
+- 현재 단계: 11주차 - 기본 화면 구성 및 1차 진행보고서 작성 단계
 - 10주차 작업 내용: 프로젝트 제안서 작성 및 GitHub 문서 정리
-- 이번 주에는 실제 앱 기능을 구현하지 않음
+- 11주차 작업 내용: Android 프로젝트 생성, 기본 화면 5개 구현, Navigation Compose 화면 전환 연결, Room DB 설계 코드 작성
+- 빌드 확인: `./gradlew :app:assembleDebug` 성공
 
-## 10주차 제출 문서
+## 제출 문서
 
 - [프로젝트 제안서](docs/week10_project_proposal.md)
+- [1차 진행보고서](docs/week11_progress_report_1.md)
+- [11주차 스크린샷 가이드](docs/week11_screenshot_guide.md)
 
 ## 주요 기능 계획
 
