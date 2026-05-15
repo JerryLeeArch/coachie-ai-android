@@ -133,7 +133,7 @@ fun AddMealScreen(
                 onClick = onSaveClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("저장 흐름 확인")
+                Text("먹은 음식 추가")
             }
         }
     }

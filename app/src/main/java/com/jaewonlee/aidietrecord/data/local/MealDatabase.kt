@@ -6,7 +6,7 @@ import com.jaewonlee.aidietrecord.data.model.MealRecord
 
 @Database(
     entities = [MealRecord::class],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 abstract class MealDatabase : RoomDatabase() {
