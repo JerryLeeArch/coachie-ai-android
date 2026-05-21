@@ -1,19 +1,51 @@
 package com.jaewonlee.aidietrecord.data.repository
 
-import com.jaewonlee.aidietrecord.data.local.MealDao
+import androidx.room.withTransaction
+import com.jaewonlee.aidietrecord.data.local.MealDatabase
 import com.jaewonlee.aidietrecord.data.model.MealRecord
+import com.jaewonlee.aidietrecord.data.model.toMealEntity
+import com.jaewonlee.aidietrecord.data.model.toMealFoodEntity
+import com.jaewonlee.aidietrecord.data.model.toMealRecord
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class MealRepository(
-    private val mealDao: MealDao
+    private val mealDatabase: MealDatabase
 ) {
-    fun observeMealRecords(): Flow<List<MealRecord>> = mealDao.observeMealRecords()
+    private val mealDao = mealDatabase.mealDao()
 
-    suspend fun getMealRecord(mealId: Long): MealRecord? = mealDao.getMealRecord(mealId)
+    fun observeMealRecords(ownerId: Long): Flow<List<MealRecord>> {
+        return mealDao.observeMealRecords(ownerId)
+            .map { meals -> meals.map { it.toMealRecord() } }
+    }
 
-    suspend fun addMealRecord(mealRecord: MealRecord): Long = mealDao.insertMealRecord(mealRecord)
+    suspend fun getMealRecord(mealId: Long, ownerId: Long): MealRecord? {
+        return mealDao.getMealRecord(mealId, ownerId)?.toMealRecord()
+    }
 
-    suspend fun updateMealRecord(mealRecord: MealRecord) = mealDao.updateMealRecord(mealRecord)
+    suspend fun addMealRecord(mealRecord: MealRecord): Long {
+        return mealDatabase.withTransaction {
+            val mealId = mealDao.insertMeal(mealRecord.toMealEntity())
+            val foods = mealRecord.foods.map { food -> food.toMealFoodEntity(mealId) }
+            if (foods.isNotEmpty()) {
+                mealDao.insertMealFoods(foods)
+            }
+            mealId
+        }
+    }
 
-    suspend fun deleteMealRecord(mealRecord: MealRecord) = mealDao.deleteMealRecord(mealRecord)
+    suspend fun updateMealRecord(mealRecord: MealRecord) {
+        mealDatabase.withTransaction {
+            mealDao.updateMeal(mealRecord.toMealEntity())
+            mealDao.deleteMealFoods(mealRecord.id)
+            val foods = mealRecord.foods.map { food -> food.copy(id = 0).toMealFoodEntity(mealRecord.id) }
+            if (foods.isNotEmpty()) {
+                mealDao.insertMealFoods(foods)
+            }
+        }
+    }
+
+    suspend fun deleteMealRecord(mealRecord: MealRecord) {
+        mealDao.deleteMeal(mealRecord.id)
+    }
 }

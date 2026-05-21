@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealRecord
-import com.jaewonlee.aidietrecord.data.sampleMeals
 import com.jaewonlee.aidietrecord.ui.util.formatMealDateTime
 import com.jaewonlee.aidietrecord.ui.util.isTodayMeal
 
@@ -40,14 +39,15 @@ private enum class MealRecordFilter {
 
 @Composable
 fun MealListScreen(
+    mealRecords: List<MealRecord>,
     onBackClick: () -> Unit,
     onMealClick: (Long) -> Unit
 ) {
     var selectedFilter by remember { mutableStateOf(MealRecordFilter.Today) }
-    val displayedMeals = remember(selectedFilter) {
+    val displayedMeals = remember(selectedFilter, mealRecords) {
         when (selectedFilter) {
-            MealRecordFilter.Today -> sampleMeals.filter { isTodayMeal(it.createdAt) }
-            MealRecordFilter.All -> sampleMeals
+            MealRecordFilter.Today -> mealRecords.filter { isTodayMeal(it.createdAt) }
+            MealRecordFilter.All -> mealRecords
         }
     }
 

@@ -23,18 +23,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealRecord
-import com.jaewonlee.aidietrecord.data.sampleMeals
 import com.jaewonlee.aidietrecord.ui.util.formatMealDate
 import com.jaewonlee.aidietrecord.ui.util.mealRecordDate
 import java.time.LocalDate
 
 @Composable
 fun RecentStatsScreen(
+    mealRecords: List<MealRecord>,
     targetCalories: Int,
     targetProteinGram: Int,
     onBackClick: () -> Unit
 ) {
-    val dailyStats = remember { sampleMeals.toDailyStats() }
+    val dailyStats = remember(mealRecords) { mealRecords.toDailyStats() }
     val recentStats = dailyStats.take(7)
     val latestStats = recentStats.firstOrNull()
     val previousStats = recentStats.drop(1).firstOrNull()

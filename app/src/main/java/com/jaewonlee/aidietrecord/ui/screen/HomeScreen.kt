@@ -30,7 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.jaewonlee.aidietrecord.data.sampleMeals
+import com.jaewonlee.aidietrecord.data.model.MealRecord
 import com.jaewonlee.aidietrecord.ui.util.isTodayMeal
 
 private val CarbColor = Color(0xFF3B82C4)
@@ -40,6 +40,7 @@ private val FatColor = Color(0xFFD18B2F)
 @Composable
 fun HomeScreen(
     nickname: String,
+    mealRecords: List<MealRecord>,
     targetCalories: Int,
     targetProteinGram: Int,
     onAddMealClick: () -> Unit,
@@ -48,7 +49,7 @@ fun HomeScreen(
     onRecentStatsClick: () -> Unit,
     onProfileClick: () -> Unit
 ) {
-    val todayMeals = sampleMeals.filter { isTodayMeal(it.createdAt) }
+    val todayMeals = mealRecords.filter { isTodayMeal(it.createdAt) }
     val totalCalories = todayMeals.sumOf { it.calories }
     val totalCarbs = todayMeals.sumOf { it.carbsGram }
     val totalProtein = todayMeals.sumOf { it.proteinGram }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +24,10 @@ fun ProfileScreen(
     onUserIdChange: (String) -> Unit,
     password: String,
     onPasswordChange: (String) -> Unit,
-    onBackClick: () -> Unit
+    errorMessage: String?,
+    onBackClick: () -> Unit,
+    onSaveClick: () -> Unit,
+    onLogoutClick: () -> Unit
 ) {
     ScreenScaffold(
         title = "프로필",
@@ -37,7 +41,7 @@ fun ProfileScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "닉네임, 아이디, 비밀번호를 수정합니다.",
+                text = "닉네임, 아이디, 비밀번호를 수정합니다. 비밀번호는 비워두면 기존 값이 유지됩니다.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -58,16 +62,29 @@ fun ProfileScreen(
             OutlinedTextField(
                 value = password,
                 onValueChange = onPasswordChange,
-                label = { Text("비밀번호") },
+                label = { Text("새 비밀번호") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
             )
+            if (errorMessage != null) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
             Button(
-                onClick = onBackClick,
+                onClick = onSaveClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("프로필 저장")
+            }
+            OutlinedButton(
+                onClick = onLogoutClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("로그아웃")
             }
         }
     }
