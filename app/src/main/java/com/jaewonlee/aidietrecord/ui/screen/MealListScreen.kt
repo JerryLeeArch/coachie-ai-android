@@ -1,9 +1,7 @@
 package com.jaewonlee.aidietrecord.ui.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealRecord
+import com.jaewonlee.aidietrecord.ui.util.UriImage
 import com.jaewonlee.aidietrecord.ui.util.formatMealDateTime
 import com.jaewonlee.aidietrecord.ui.util.isTodayMeal
 
@@ -52,7 +51,7 @@ fun MealListScreen(
     }
 
     ScreenScaffold(
-        title = "식단 기록",
+        title = "Meal History",
         onBackClick = onBackClick
     ) { innerPadding ->
         LazyColumn(
@@ -93,13 +92,13 @@ private fun MealRecordFilterButtons(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         FilterButton(
-            text = "오늘 기록 보기",
+            text = "Today",
             selected = selectedFilter == MealRecordFilter.Today,
             onClick = { onFilterSelected(MealRecordFilter.Today) },
             modifier = Modifier.weight(1f)
         )
         FilterButton(
-            text = "전체 기록 보기",
+            text = "All Records",
             selected = selectedFilter == MealRecordFilter.All,
             onClick = { onFilterSelected(MealRecordFilter.All) },
             modifier = Modifier.weight(1f)
@@ -134,8 +133,8 @@ private fun FilterButton(
 @Composable
 private fun EmptyMealRecordMessage(selectedFilter: MealRecordFilter) {
     val message = when (selectedFilter) {
-        MealRecordFilter.Today -> "오늘 기록이 없습니다."
-        MealRecordFilter.All -> "저장된 기록이 없습니다."
+        MealRecordFilter.Today -> "No meals logged today."
+        MealRecordFilter.All -> "No meal records saved."
     }
 
     Card(
@@ -170,14 +169,11 @@ private fun MealListItem(
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .background(Color(0xFFEAF1E8), RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("사진", color = Color(0xFF52624F))
-            }
+            UriImage(
+                imageUri = mealRecord.imageUri,
+                placeholderText = "Photo",
+                modifier = Modifier.size(72.dp)
+            )
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -194,7 +190,12 @@ private fun MealListItem(
                 )
                 Text("${mealRecord.calories} kcal", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "탄 ${mealRecord.carbsGram}g · 단 ${mealRecord.proteinGram}g · 지 ${mealRecord.fatGram}g",
+                    text = "Carbs ${mealRecord.carbsGram}g | Protein ${mealRecord.proteinGram}g | Fat ${mealRecord.fatGram}g",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF52624F)
+                )
+                Text(
+                    text = "Fiber ${mealRecord.fiberGram}g | Sugar ${mealRecord.sugarGram}g | Sodium ${mealRecord.sodiumMilligram}mg",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color(0xFF52624F)
                 )

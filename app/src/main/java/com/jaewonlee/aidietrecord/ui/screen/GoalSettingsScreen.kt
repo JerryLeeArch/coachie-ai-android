@@ -40,7 +40,7 @@ fun GoalSettingsScreen(
     val goalSummary = buildGoalSummary(currentWeight, targetWeight, targetWeeks)
 
     ScreenScaffold(
-        title = "내 목표 설정",
+        title = "Goal Settings",
         onBackClick = onBackClick
     ) { innerPadding ->
         Column(
@@ -51,7 +51,7 @@ fun GoalSettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "체중 변화 속도와 영양 기준을 함께 설정합니다.",
+                text = "Set your weight pace and daily nutrition targets together.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -66,7 +66,7 @@ fun GoalSettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "목표 기간",
+                        text = "Goal Timeline",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -77,7 +77,7 @@ fun GoalSettingsScreen(
                         OutlinedTextField(
                             value = currentWeight,
                             onValueChange = { onCurrentWeightChange(filterDecimalInput(it)) },
-                            label = { Text("현재 체중") },
+                            label = { Text("Current Weight") },
                             suffix = { Text("kg") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -86,7 +86,7 @@ fun GoalSettingsScreen(
                         OutlinedTextField(
                             value = targetWeight,
                             onValueChange = { onTargetWeightChange(filterDecimalInput(it)) },
-                            label = { Text("목표 체중") },
+                            label = { Text("Target Weight") },
                             suffix = { Text("kg") },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -96,8 +96,8 @@ fun GoalSettingsScreen(
                     OutlinedTextField(
                         value = targetWeeks,
                         onValueChange = { onTargetWeeksChange(it.filter(Char::isDigit)) },
-                        label = { Text("목표 기간") },
-                        suffix = { Text("주") },
+                        label = { Text("Goal Duration") },
+                        suffix = { Text("weeks") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth()
@@ -120,14 +120,14 @@ fun GoalSettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "하루 기준",
+                        text = "Daily Targets",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     OutlinedTextField(
                         value = targetCalories,
                         onValueChange = { onTargetCaloriesChange(it.filter(Char::isDigit)) },
-                        label = { Text("목표 칼로리") },
+                        label = { Text("Calorie Goal") },
                         suffix = { Text("kcal") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -136,7 +136,7 @@ fun GoalSettingsScreen(
                     OutlinedTextField(
                         value = proteinGoal,
                         onValueChange = { onProteinGoalChange(it.filter(Char::isDigit)) },
-                        label = { Text("단백질 목표") },
+                        label = { Text("Protein Goal") },
                         suffix = { Text("g") },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -149,7 +149,7 @@ fun GoalSettingsScreen(
                 onClick = onBackClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("목표 저장")
+                Text("Save Goals")
             }
         }
     }
@@ -179,22 +179,18 @@ private fun buildGoalSummary(
     val weeks = targetWeeks.toIntOrNull()
 
     if (current == null || target == null || weeks == null || weeks <= 0) {
-        return "목표 체중과 기간을 입력하면 변화 속도를 계산합니다."
+        return "Enter your target weight and duration to calculate your pace."
     }
 
     val change = target - current
-    val direction = when {
-        change < 0 -> "감량"
-        change > 0 -> "증량"
-        else -> "유지"
-    }
     val totalChange = abs(change)
 
-    if (direction == "유지") {
-        return "${weeks}주 동안 현재 체중을 유지하는 계획입니다."
+    if (change == 0.0) {
+        return "Plan to maintain your current weight for $weeks weeks."
     }
 
-    return "${weeks}주 동안 ${formatWeight(totalChange)}kg $direction · 주당 ${formatWeight(totalChange / weeks)}kg 변화"
+    val direction = if (change < 0) "lose" else "gain"
+    return "Plan to $direction ${formatWeight(totalChange)}kg over $weeks weeks - ${formatWeight(totalChange / weeks)}kg per week."
 }
 
 private fun formatWeight(value: Double): String {

@@ -1,6 +1,7 @@
 package com.jaewonlee.aidietrecord.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +15,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.jaewonlee.aidietrecord.data.ai.GeminiMealAnalyzer
+import com.jaewonlee.aidietrecord.data.local.AuthSessionStore
 import com.jaewonlee.aidietrecord.data.local.MealDatabase
 import com.jaewonlee.aidietrecord.data.model.UserAccount
 import com.jaewonlee.aidietrecord.data.repository.AuthRepository
@@ -34,20 +37,27 @@ import kotlinx.coroutines.launch
 fun AIDietNavHost() {
     val navController = rememberNavController()
     val context = LocalContext.current
+    val authSessionStore = remember(context.applicationContext) {
+        AuthSessionStore(context.applicationContext)
+    }
     val mealDatabase = remember(context.applicationContext) {
         MealDatabase.getDatabase(context.applicationContext)
     }
     val mealRepository = remember(mealDatabase) {
         MealRepository(mealDatabase)
     }
-    val mealReviewRepository = remember {
-        MealReviewRepository()
+    val mealReviewRepository = remember(context.applicationContext) {
+        MealReviewRepository(
+            geminiMealAnalyzer = GeminiMealAnalyzer(context.applicationContext)
+        )
     }
     val authRepository = remember(mealDatabase) {
         AuthRepository(mealDatabase.authDao())
     }
 
-    var currentUserId by rememberSaveable { mutableStateOf(0L) }
+    var currentUserId by rememberSaveable {
+        mutableStateOf(authSessionStore.getSavedUserId())
+    }
     var currentUserLoginId by rememberSaveable { mutableStateOf("") }
     var currentUserNickname by rememberSaveable { mutableStateOf("") }
     var currentUserPasswordHash by rememberSaveable { mutableStateOf("") }
@@ -80,6 +90,10 @@ fun AIDietNavHost() {
     var targetWeeks by rememberSaveable { mutableStateOf("8") }
     var targetCalories by rememberSaveable { mutableStateOf("1900") }
     var proteinGoal by rememberSaveable { mutableStateOf("110") }
+    var mealSaveInProgress by rememberSaveable { mutableStateOf(false) }
+    var authRestoreCompleted by rememberSaveable {
+        mutableStateOf(authSessionStore.getSavedUserId() <= 0L)
+    }
 
     val setCurrentUser: (UserAccount?) -> Unit = { userAccount ->
         currentUserId = userAccount?.id ?: 0L
@@ -89,9 +103,34 @@ fun AIDietNavHost() {
         currentUserCreatedAt = userAccount?.createdAt ?: 0L
     }
 
+    LaunchedEffect(Unit) {
+        val savedUserId = authSessionStore.getSavedUserId()
+        if (savedUserId > 0L) {
+            val savedUser = authRepository.getUserById(savedUserId)
+            if (savedUser == null) {
+                authSessionStore.clear()
+                setCurrentUser(null)
+                nickname = ""
+                userId = ""
+                password = ""
+            } else {
+                setCurrentUser(savedUser)
+                nickname = savedUser.nickname
+                userId = savedUser.userId
+                password = ""
+                authErrorMessage = null
+            }
+        }
+        authRestoreCompleted = true
+    }
+
+    if (!authRestoreCompleted) {
+        return
+    }
+
     NavHost(
         navController = navController,
-        startDestination = Route.Login.path
+        startDestination = if (currentUserId > 0L) Route.Home.path else Route.Login.path
     ) {
         composable(Route.Login.path) {
             LoginScreen(
@@ -102,6 +141,7 @@ fun AIDietNavHost() {
                         if (userAccount == null) {
                             authErrorMessage = "아이디 또는 비밀번호가 올바르지 않습니다."
                         } else {
+                            authSessionStore.saveUserId(userAccount.id)
                             setCurrentUser(userAccount)
                             nickname = userAccount.nickname
                             userId = userAccount.userId
@@ -122,6 +162,7 @@ fun AIDietNavHost() {
                                 password = loginPassword
                             )
                             .onSuccess { userAccount ->
+                                authSessionStore.saveUserId(userAccount.id)
                                 setCurrentUser(userAccount)
                                 nickname = userAccount.nickname
                                 userId = userAccount.userId
@@ -156,15 +197,23 @@ fun AIDietNavHost() {
         composable(Route.AddMeal.path) {
             AddMealScreen(
                 initialMeal = null,
+                isSaving = mealSaveInProgress,
                 onBackClick = { navController.navigateUp() },
                 onSaveClick = { mealUploadDraft ->
-                    coroutineScope.launch {
-                        val reviewedMeal = mealReviewRepository.reviewMealDraft(
-                            mealUploadDraft.copy(ownerId = currentUserId)
-                        )
-                        mealRepository.addMealRecord(reviewedMeal)
-                        navController.navigate(Route.MealList.path) {
-                            popUpTo(Route.Home.path)
+                    if (!mealSaveInProgress) {
+                        mealSaveInProgress = true
+                        coroutineScope.launch {
+                            try {
+                                val reviewedMeal = mealReviewRepository.reviewMealDraft(
+                                    mealUploadDraft.copy(ownerId = currentUserId)
+                                )
+                                mealRepository.addMealRecord(reviewedMeal)
+                                navController.navigate(Route.MealList.path) {
+                                    popUpTo(Route.Home.path)
+                                }
+                            } finally {
+                                mealSaveInProgress = false
+                            }
                         }
                     }
                 }
@@ -200,14 +249,22 @@ fun AIDietNavHost() {
 
             AddMealScreen(
                 initialMeal = mealRecord,
+                isSaving = mealSaveInProgress,
                 onBackClick = { navController.navigateUp() },
                 onSaveClick = { mealUploadDraft ->
-                    coroutineScope.launch {
-                        val reviewedMeal = mealReviewRepository.reviewMealDraft(
-                            mealUploadDraft.copy(ownerId = currentUserId)
-                        )
-                        mealRepository.updateMealRecord(reviewedMeal)
-                        navController.navigateUp()
+                    if (!mealSaveInProgress) {
+                        mealSaveInProgress = true
+                        coroutineScope.launch {
+                            try {
+                                val reviewedMeal = mealReviewRepository.reviewMealDraft(
+                                    mealUploadDraft.copy(ownerId = currentUserId)
+                                )
+                                mealRepository.updateMealRecord(reviewedMeal)
+                                navController.navigateUp()
+                            } finally {
+                                mealSaveInProgress = false
+                            }
+                        }
                     }
                 }
             )
@@ -245,6 +302,7 @@ fun AIDietNavHost() {
                                     newPassword = password
                                 )
                                 .onSuccess { updatedUser ->
+                                    authSessionStore.saveUserId(updatedUser.id)
                                     setCurrentUser(updatedUser)
                                     nickname = updatedUser.nickname
                                     userId = updatedUser.userId
@@ -259,6 +317,7 @@ fun AIDietNavHost() {
                     }
                 },
                 onLogoutClick = {
+                    authSessionStore.clear()
                     setCurrentUser(null)
                     nickname = ""
                     userId = ""

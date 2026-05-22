@@ -1,8 +1,10 @@
 package com.jaewonlee.aidietrecord.ui.screen
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,12 +12,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,18 +31,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealFoodDraft
 import com.jaewonlee.aidietrecord.data.model.MealRecord
 import com.jaewonlee.aidietrecord.data.model.MealUploadDraft
-import com.jaewonlee.aidietrecord.data.nutrition.estimateCaloriesFromFoodName
-import com.jaewonlee.aidietrecord.data.nutrition.estimateMacros
+import com.jaewonlee.aidietrecord.ui.util.UriImage
 
 @Composable
 fun AddMealScreen(
     initialMeal: MealRecord? = null,
+    isSaving: Boolean = false,
     onBackClick: () -> Unit,
     onSaveClick: (MealUploadDraft) -> Unit
 ) {
@@ -54,13 +55,7 @@ fun AddMealScreen(
     var nextDraftId by remember(initialMeal?.id) {
         mutableStateOf((foodDrafts.maxOfOrNull { it.id } ?: 0L) + 1L)
     }
-    var memo by remember(initialMeal?.id) { mutableStateOf(initialMeal?.memo.orEmpty()) }
     var errorMessage by remember(initialMeal?.id) { mutableStateOf<String?>(null) }
-
-    val totalCalories = foodDrafts.sumOf { it.reviewedCalories() }
-    val totalCarbsGram = foodDrafts.sumOf { it.reviewedCarbsGram() }
-    val totalProteinGram = foodDrafts.sumOf { it.reviewedProteinGram() }
-    val totalFatGram = foodDrafts.sumOf { it.reviewedFatGram() }
 
     fun updateDraft(
         draftId: Long,
@@ -73,7 +68,7 @@ fun AddMealScreen(
     }
 
     ScreenScaffold(
-        title = if (isEditMode) "음식 수정" else "식사 추가",
+        title = if (isEditMode) "Edit Meal" else "Add Meal",
         onBackClick = onBackClick
     ) { innerPadding ->
         Column(
@@ -83,38 +78,33 @@ fun AddMealScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            MealPhotoPicker()
-
             SectionHeader(
-                title = "음식 목록",
-                trailingText = "${foodDrafts.size}개"
+                title = "Food Items",
+                trailingText = itemCountText(foodDrafts.size)
             )
 
             foodDrafts.forEachIndexed { index, draft ->
-                FoodDraftCard(
-                    draft = draft,
-                    index = index,
-                    canRemove = foodDrafts.size > 1,
-                    onFoodNameChange = { value ->
-                        updateDraft(draft.id) { it.copy(foodName = value) }
-                    },
-                    onCaloriesChange = { value ->
-                        updateDraft(draft.id) { it.copy(calories = value.filter(Char::isDigit)) }
-                    },
-                    onCarbsChange = { value ->
-                        updateDraft(draft.id) { it.copy(carbsGram = value.filter(Char::isDigit)) }
-                    },
-                    onProteinChange = { value ->
-                        updateDraft(draft.id) { it.copy(proteinGram = value.filter(Char::isDigit)) }
-                    },
-                    onFatChange = { value ->
-                        updateDraft(draft.id) { it.copy(fatGram = value.filter(Char::isDigit)) }
-                    },
-                    onRemoveClick = {
-                        foodDrafts.removeAll { it.id == draft.id }
-                        errorMessage = null
-                    }
-                )
+                key(draft.id) {
+                    FoodDraftCard(
+                        draft = draft,
+                        index = index,
+                        canRemove = foodDrafts.size > 1,
+                        onFoodNameChange = { value ->
+                            updateDraft(draft.id) { it.copy(foodName = value) }
+                        },
+                        onDescriptionChange = { value ->
+                            updateDraft(draft.id) { it.copy(description = value) }
+                        },
+                        onImageSelected = { value ->
+                            updateDraft(draft.id) { it.copy(imageUri = value) }
+                            errorMessage = null
+                        },
+                        onRemoveClick = {
+                            foodDrafts.removeAll { it.id == draft.id }
+                            errorMessage = null
+                        }
+                    )
+                }
             }
 
             OutlinedButton(
@@ -125,23 +115,8 @@ fun AddMealScreen(
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("음식 추가")
+                Text("Add Another Food")
             }
-
-            OutlinedTextField(
-                value = memo,
-                onValueChange = { memo = it },
-                label = { Text("식사 메모") },
-                minLines = 3,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            MealTotalSummary(
-                calories = totalCalories,
-                carbsGram = totalCarbsGram,
-                proteinGram = totalProteinGram,
-                fatGram = totalFatGram
-            )
 
             if (errorMessage != null) {
                 Text(
@@ -154,68 +129,43 @@ fun AddMealScreen(
             Button(
                 onClick = {
                     val invalidIndex = foodDrafts.indexOfFirst { draft ->
-                        draft.foodName.trim().isBlank()
+                        draft.foodName.isBlank() &&
+                            draft.description.isBlank() &&
+                            draft.imageUri == null
                     }
 
                     errorMessage = when {
-                        invalidIndex >= 0 -> "${invalidIndex + 1}번째 음식명을 입력해 주세요."
+                        invalidIndex >= 0 -> {
+                            "Add a food name, description, or photo for item ${invalidIndex + 1}."
+                        }
                         else -> null
                     }
 
                     if (errorMessage == null) {
                         val createdAt = initialMeal?.createdAt ?: System.currentTimeMillis()
+                        val foods = foodDrafts.map { it.toMealFoodDraft() }
                         onSaveClick(
                             MealUploadDraft(
                                 id = initialMeal?.id ?: 0,
                                 ownerId = initialMeal?.ownerId ?: 0,
-                                memo = memo.trim(),
-                                imageUri = initialMeal?.imageUri,
+                                memo = foods.toMealMemo(initialMeal?.memo.orEmpty()),
+                                imageUri = foods.firstNotNullOfOrNull { it.imageUri },
                                 createdAt = createdAt,
-                                foods = foodDrafts.map { it.toMealFoodDraft() }
+                                foods = foods
                             )
                         )
                     }
                 },
+                enabled = !isSaving,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (isEditMode) "수정 내용 저장" else "AI 검사 후 식사 업로드")
-            }
-        }
-    }
-}
-
-@Composable
-private fun MealPhotoPicker() {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            Text(
-                text = "음식 사진",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp)
-                    .background(Color(0xFFEAF1E8), RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
-            ) {
                 Text(
-                    text = "이미지 미리보기",
-                    color = Color(0xFF52624F),
-                    style = MaterialTheme.typography.bodyMedium
+                    when {
+                        isSaving -> "Analyzing..."
+                        isEditMode -> "Save Changes"
+                        else -> "Analyze Meal"
+                    }
                 )
-            }
-            OutlinedButton(onClick = { }) {
-                Text("사진 선택")
             }
         }
     }
@@ -250,12 +200,25 @@ private fun FoodDraftCard(
     index: Int,
     canRemove: Boolean,
     onFoodNameChange: (String) -> Unit,
-    onCaloriesChange: (String) -> Unit,
-    onCarbsChange: (String) -> Unit,
-    onProteinChange: (String) -> Unit,
-    onFatChange: (String) -> Unit,
+    onDescriptionChange: (String) -> Unit,
+    onImageSelected: (String?) -> Unit,
     onRemoveClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { selectedUri ->
+        if (selectedUri != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    selectedUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+            onImageSelected(selectedUri.toString())
+        }
+    }
+
     Card(
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
@@ -272,13 +235,32 @@ private fun FoodDraftCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "음식 ${index + 1}",
+                    text = "Food ${index + 1}",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
                 if (canRemove) {
                     TextButton(onClick = onRemoveClick) {
-                        Text("삭제")
+                        Text("Remove")
+                    }
+                }
+            }
+
+            UriImage(
+                imageUri = draft.imageUri,
+                placeholderText = "Food photo optional",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(154.dp)
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { imagePicker.launch(arrayOf("image/*")) }) {
+                    Text(if (draft.imageUri == null) "Add Photo" else "Change Photo")
+                }
+                if (draft.imageUri != null) {
+                    TextButton(onClick = { onImageSelected(null) }) {
+                        Text("Remove Photo")
                     }
                 }
             }
@@ -286,147 +268,34 @@ private fun FoodDraftCard(
             OutlinedTextField(
                 value = draft.foodName,
                 onValueChange = onFoodNameChange,
-                label = { Text("음식명") },
+                label = { Text("Food Name") },
+                placeholder = { Text("e.g. Chicken salad") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
 
             OutlinedTextField(
-                value = draft.calories,
-                onValueChange = onCaloriesChange,
-                label = { Text("칼로리") },
-                placeholder = { Text("AI 자동") },
-                suffix = { Text("kcal") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                value = draft.description,
+                onValueChange = onDescriptionChange,
+                label = { Text("Description") },
+                placeholder = {
+                    Text(
+                        "Example: Grilled chicken salad with avocado and light dressing. " +
+                            "Medium bowl, no cheese. Add any calories or nutrition details you know."
+                    )
+                },
+                minLines = 5,
                 modifier = Modifier.fillMaxWidth()
             )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                MacroTextField(
-                    value = draft.carbsGram,
-                    onValueChange = onCarbsChange,
-                    label = "탄수",
-                    modifier = Modifier.weight(1f)
-                )
-                MacroTextField(
-                    value = draft.proteinGram,
-                    onValueChange = onProteinChange,
-                    label = "단백질",
-                    modifier = Modifier.weight(1f)
-                )
-                MacroTextField(
-                    value = draft.fatGram,
-                    onValueChange = onFatChange,
-                    label = "지방",
-                    modifier = Modifier.weight(1f)
-                )
-            }
         }
-    }
-}
-
-@Composable
-private fun MacroTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        placeholder = { Text("자동") },
-        suffix = { Text("g") },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = modifier
-    )
-}
-
-@Composable
-private fun MealTotalSummary(
-    calories: Int,
-    carbsGram: Int,
-    proteinGram: Int,
-    fatGram: Int
-) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "식사 합계",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "$calories kcal",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF2D6A4F)
-                )
-            }
-            HorizontalDivider(color = Color(0xFFE1E7DF))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                SummaryPill("탄수", "${carbsGram}g", Modifier.weight(1f))
-                SummaryPill("단백질", "${proteinGram}g", Modifier.weight(1f))
-                SummaryPill("지방", "${fatGram}g", Modifier.weight(1f))
-            }
-        }
-    }
-}
-
-@Composable
-private fun SummaryPill(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier
-            .background(Color(0xFFF4F7F2), RoundedCornerShape(8.dp))
-            .padding(horizontal = 10.dp, vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = Color(0xFF52624F)
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold
-        )
     }
 }
 
 private data class FoodDraftUiState(
     val id: Long,
     val foodName: String = "",
-    val calories: String = "",
-    val carbsGram: String = "",
-    val proteinGram: String = "",
-    val fatGram: String = ""
+    val description: String = "",
+    val imageUri: String? = null
 )
 
 private fun MealRecord?.toFoodDrafts(): List<FoodDraftUiState> {
@@ -439,10 +308,8 @@ private fun MealRecord?.toFoodDrafts(): List<FoodDraftUiState> {
         FoodDraftUiState(
             id = index + 1L,
             foodName = food.foodName,
-            calories = food.calories.toString(),
-            carbsGram = food.carbsGram.toString(),
-            proteinGram = food.proteinGram.toString(),
-            fatGram = food.fatGram.toString()
+            description = food.description,
+            imageUri = food.imageUri ?: this?.imageUri?.takeIf { index == 0 }
         )
     }
 }
@@ -450,29 +317,21 @@ private fun MealRecord?.toFoodDrafts(): List<FoodDraftUiState> {
 private fun FoodDraftUiState.toMealFoodDraft(): MealFoodDraft {
     return MealFoodDraft(
         foodName = foodName.trim(),
-        calories = calories.toPositiveIntOrNull(),
-        carbsGram = carbsGram.toIntOrNull(),
-        proteinGram = proteinGram.toIntOrNull(),
-        fatGram = fatGram.toIntOrNull()
+        description = description.trim(),
+        imageUri = imageUri
     )
 }
 
-private fun FoodDraftUiState.reviewedCalories(): Int {
-    return calories.toPositiveIntOrNull() ?: estimateCaloriesFromFoodName(foodName)
+private fun List<MealFoodDraft>.toMealMemo(fallbackMemo: String): String {
+    return mapIndexedNotNull { index, food ->
+        food.description
+            .takeIf { it.isNotBlank() }
+            ?.let { "Food ${index + 1}: $it" }
+    }
+        .joinToString("\n\n")
+        .ifBlank { fallbackMemo }
 }
 
-private fun FoodDraftUiState.reviewedCarbsGram(): Int {
-    return carbsGram.toIntOrNull() ?: estimateMacros(reviewedCalories()).carbsGram
-}
-
-private fun FoodDraftUiState.reviewedProteinGram(): Int {
-    return proteinGram.toIntOrNull() ?: estimateMacros(reviewedCalories()).proteinGram
-}
-
-private fun FoodDraftUiState.reviewedFatGram(): Int {
-    return fatGram.toIntOrNull() ?: estimateMacros(reviewedCalories()).fatGram
-}
-
-private fun String.toPositiveIntOrNull(): Int? {
-    return toIntOrNull()?.takeIf { it > 0 }
+private fun itemCountText(count: Int): String {
+    return if (count == 1) "1 item" else "$count items"
 }

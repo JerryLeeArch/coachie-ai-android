@@ -43,7 +43,7 @@ fun RecentStatsScreen(
     val averageRecords = recentStats.averageOf { it.recordCount }
 
     ScreenScaffold(
-        title = "최근 통계 & 경향",
+        title = "Insights",
         onBackClick = onBackClick
     ) { innerPadding ->
         Column(
@@ -64,14 +64,14 @@ fun RecentStatsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "최근 기록일 평균",
+                        text = "Recent Day Averages",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        StatsChip("칼로리", "${averageCalories} kcal", Modifier.weight(1f))
-                        StatsChip("단백질", "${averageProtein}g", Modifier.weight(1f))
-                        StatsChip("기록", "${averageRecords}개", Modifier.weight(1f))
+                        StatsChip("Calories", "${averageCalories} kcal", Modifier.weight(1f))
+                        StatsChip("Protein", "${averageProtein}g", Modifier.weight(1f))
+                        StatsChip("Records", "${averageRecords}", Modifier.weight(1f))
                     }
                     Text(
                         text = buildTrendText(latestStats, previousStats),
@@ -91,7 +91,7 @@ fun RecentStatsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "칼로리 경향",
+                        text = "Calorie Trend",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -114,7 +114,7 @@ fun RecentStatsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "영양 경향",
+                        text = "Nutrition Trend",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -190,7 +190,7 @@ private fun DailyMacroRow(
         ) {
             Text(formatMealDate(stats.date), style = MaterialTheme.typography.bodyMedium)
             Text(
-                text = "탄 ${stats.carbsGram}g · 단 ${stats.proteinGram}g · 지 ${stats.fatGram}g",
+                text = "Carbs ${stats.carbsGram}g | Protein ${stats.proteinGram}g | Fat ${stats.fatGram}g",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFF52624F)
             )
@@ -239,13 +239,13 @@ private fun buildTrendText(
     latestStats: DailyNutritionStats?,
     previousStats: DailyNutritionStats?
 ): String {
-    if (latestStats == null) return "아직 통계를 만들 기록이 없습니다."
-    if (previousStats == null) return "기록이 더 쌓이면 이전 기록일과 비교할 수 있습니다."
+    if (latestStats == null) return "No records yet to build insights."
+    if (previousStats == null) return "Add more records to compare with your previous logged day."
 
     val calorieDiff = latestStats.calories - previousStats.calories
     return when {
-        calorieDiff > 0 -> "직전 기록일보다 ${calorieDiff} kcal 더 섭취했습니다."
-        calorieDiff < 0 -> "직전 기록일보다 ${-calorieDiff} kcal 덜 섭취했습니다."
-        else -> "직전 기록일과 같은 칼로리를 섭취했습니다."
+        calorieDiff > 0 -> "You ate ${calorieDiff} kcal more than the previous logged day."
+        calorieDiff < 0 -> "You ate ${-calorieDiff} kcal less than the previous logged day."
+        else -> "You ate the same calories as the previous logged day."
     }
 }

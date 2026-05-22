@@ -38,10 +38,15 @@ data class MealFoodEntity(
     val id: Long = 0,
     val mealId: Long,
     val foodName: String,
+    val description: String = "",
+    val imageUri: String? = null,
     val calories: Int,
     val carbsGram: Int,
     val proteinGram: Int,
     val fatGram: Int,
+    val fiberGram: Int = 0,
+    val sugarGram: Int = 0,
+    val sodiumMilligram: Int = 0,
     val aiFoodName: String?,
     val aiCalories: Int?,
     val confidence: Float?
@@ -67,9 +72,9 @@ data class MealRecord(
 ) {
     val foodName: String
         get() = when {
-            foods.isEmpty() -> "음식 없음"
+            foods.isEmpty() -> "No food"
             foods.size == 1 -> foods.first().foodName
-            else -> "${foods.first().foodName} 외 ${foods.size - 1}개"
+            else -> "${foods.first().foodName} + ${foods.size - 1} more"
         }
 
     val calories: Int
@@ -83,6 +88,15 @@ data class MealRecord(
 
     val fatGram: Int
         get() = foods.sumOf { it.fatGram }
+
+    val fiberGram: Int
+        get() = foods.sumOf { it.fiberGram }
+
+    val sugarGram: Int
+        get() = foods.sumOf { it.sugarGram }
+
+    val sodiumMilligram: Int
+        get() = foods.sumOf { it.sodiumMilligram }
 
     val aiFoodName: String?
         get() = foods
@@ -98,10 +112,15 @@ data class MealFoodRecord(
     val id: Long = 0,
     val mealId: Long = 0,
     val foodName: String,
+    val description: String = "",
+    val imageUri: String? = null,
     val calories: Int,
     val carbsGram: Int,
     val proteinGram: Int,
     val fatGram: Int,
+    val fiberGram: Int = 0,
+    val sugarGram: Int = 0,
+    val sodiumMilligram: Int = 0,
     val aiFoodName: String?,
     val aiCalories: Int?,
     val confidence: Float?
@@ -118,10 +137,15 @@ data class MealUploadDraft(
 
 data class MealFoodDraft(
     val foodName: String,
-    val calories: Int?,
-    val carbsGram: Int?,
-    val proteinGram: Int?,
-    val fatGram: Int?
+    val description: String = "",
+    val imageUri: String? = null,
+    val calories: Int? = null,
+    val carbsGram: Int? = null,
+    val proteinGram: Int? = null,
+    val fatGram: Int? = null,
+    val fiberGram: Int? = null,
+    val sugarGram: Int? = null,
+    val sodiumMilligram: Int? = null
 )
 
 fun MealWithFoods.toMealRecord(): MealRecord {
@@ -154,10 +178,15 @@ fun MealFoodRecord.toMealFoodEntity(mealId: Long): MealFoodEntity {
         id = id,
         mealId = mealId,
         foodName = foodName,
+        description = description,
+        imageUri = imageUri,
         calories = calories,
         carbsGram = carbsGram,
         proteinGram = proteinGram,
         fatGram = fatGram,
+        fiberGram = fiberGram,
+        sugarGram = sugarGram,
+        sodiumMilligram = sodiumMilligram,
         aiFoodName = aiFoodName,
         aiCalories = aiCalories,
         confidence = confidence
@@ -169,10 +198,15 @@ private fun MealFoodEntity.toMealFoodRecord(): MealFoodRecord {
         id = id,
         mealId = mealId,
         foodName = foodName,
+        description = description,
+        imageUri = imageUri,
         calories = calories,
         carbsGram = carbsGram,
         proteinGram = proteinGram,
         fatGram = fatGram,
+        fiberGram = fiberGram,
+        sugarGram = sugarGram,
+        sodiumMilligram = sodiumMilligram,
         aiFoodName = aiFoodName,
         aiCalories = aiCalories,
         confidence = confidence

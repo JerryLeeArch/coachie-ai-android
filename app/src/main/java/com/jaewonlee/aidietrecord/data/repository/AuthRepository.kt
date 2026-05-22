@@ -7,6 +7,10 @@ import java.security.MessageDigest
 class AuthRepository(
     private val authDao: AuthDao
 ) {
+    suspend fun getUserById(id: Long): UserAccount? {
+        return authDao.getUserById(id)
+    }
+
     suspend fun login(userId: String, password: String): UserAccount? {
         val normalizedUserId = userId.trim()
         val user = authDao.getUserByUserId(normalizedUserId) ?: return null

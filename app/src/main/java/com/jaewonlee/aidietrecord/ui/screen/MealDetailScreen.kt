@@ -1,8 +1,6 @@
 package com.jaewonlee.aidietrecord.ui.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,13 +15,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealFoodRecord
 import com.jaewonlee.aidietrecord.data.model.MealRecord
+import com.jaewonlee.aidietrecord.ui.util.UriImage
 import com.jaewonlee.aidietrecord.ui.util.formatMealDateTime
 
 @Composable
@@ -59,22 +57,17 @@ fun MealDetailScreen(
                 return@Column
             }
 
-            Box(
+            UriImage(
+                imageUri = mealRecord.imageUri,
+                placeholderText = if (mealRecord.imageUri == null) {
+                    "저장된 음식 이미지 없음"
+                } else {
+                    "음식 이미지 불러오기 실패"
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(220.dp)
-                    .background(Color(0xFFEAF1E8), RoundedCornerShape(8.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = if (mealRecord.imageUri == null) {
-                        "저장된 음식 이미지 없음"
-                    } else {
-                        "저장된 음식 이미지 표시 영역"
-                    },
-                    color = Color(0xFF52624F)
-                )
-            }
+            )
 
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -147,6 +140,9 @@ fun MealDetailScreen(
                     NutritionInfoRow("탄수화물", "${mealRecord.carbsGram}g")
                     NutritionInfoRow("단백질", "${mealRecord.proteinGram}g")
                     NutritionInfoRow("지방", "${mealRecord.fatGram}g")
+                    NutritionInfoRow("Fiber", "${mealRecord.fiberGram}g")
+                    NutritionInfoRow("Sugar", "${mealRecord.sugarGram}g")
+                    NutritionInfoRow("Sodium", "${mealRecord.sodiumMilligram}mg")
                 }
             }
 
@@ -197,6 +193,11 @@ private fun MealFoodInfoRow(food: MealFoodRecord) {
         }
         Text(
             text = "탄 ${food.carbsGram}g · 단 ${food.proteinGram}g · 지 ${food.fatGram}g",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color(0xFF52624F)
+        )
+        Text(
+            text = "Fiber ${food.fiberGram}g · Sugar ${food.sugarGram}g · Sodium ${food.sodiumMilligram}mg",
             style = MaterialTheme.typography.bodySmall,
             color = Color(0xFF52624F)
         )
