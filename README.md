@@ -8,8 +8,6 @@ Kotlin과 Jetpack Compose를 사용하여 개발 중인 모바일 프로그래�
 - 11주차: 기본 화면 구성, Navigation 연결, LazyColumn 리스트, Room DB 설계
 - 12주차: Room DB 실제 연결, 사용자별 식단 저장/조회/상세/수정, 이미지 선택, Firebase AI Gemini 분석 초안 구현
 
-12주차 현재 앱은 샘플 데이터 중심 구조에서 실제 사용자 입력 데이터를 저장하고 조회하는 구조로 전환되었다. 기존 `주차별진행보고서.docx` 파일은 그대로 두었고, 12주차 보고서 초안은 `docs/week12_weekly_progress_report.txt`에 작성했다.
-
 ## 구현된 주요 기능
 
 - 로그인 및 회원가입
@@ -85,41 +83,3 @@ Room Database는 다음 Entity를 사용한다.
 | 데이터베이스             | Room DB로 사용자, 식단, 음식 항목 저장/조회 구현                                  |
 | 선택 기능                | Firebase AI Gemini 기반 AI 분석 기능 구현                                         |
 | 패키지 구조              | data, navigation, ui.screen, ui.util 등으로 분리                                  |
-
-## 문서
-
-- `docs/week10_project_proposal.md`: 10주차 프로젝트 제안서
-- `docs/week11_weekly_progress_report.txt`: 11주차 진행보고서
-- `docs/week12_weekly_progress_report.txt`: 12주차 진행보고서 초안
-- `notes.txt`: 프로젝트 공지 및 제출 유의사항 정리
-
-## 빌드 확인
-
-Android Studio 내장 JDK를 사용하여 다음 명령이 성공하는 것을 확인했다.
-
-```bash
-./gradlew testDebugUnitTest
-./gradlew assembleDebug
-```
-
-## 남은 작업
-
-- 12주차 보고서 최종 제출 전 커밋 수와 커밋 히스토리 그래프 업데이트
-- 주요 화면 스크린샷 캡처 및 보고서 첨부
-- AI 분석 결과를 저장 전 사용자가 직접 수정할 수 있는 UI 추가
-- 식단 기록 삭제 기능 UI 연결
-- 목표 설정 값을 사용자별로 Room DB에 저장
-- 한국어/영어가 섞인 화면 문구 정리
-- 최종 제출용 APK, QR 코드, 발표 자료 준비
-
-## 범위 제한
-
-이번 프로젝트에서는 핵심 식단 기록 기능에 집중하기 위해 다음 기능은 구현 범위에서 제외한다.
-
-- 카카오 로그인
-- 네이버 로그인
-- Firebase Auth
-- 지도 기능
-- 친구 공유 기능
-- 운동 기록 기능
-- 상용 서비스 수준의 추천 알고리즘
