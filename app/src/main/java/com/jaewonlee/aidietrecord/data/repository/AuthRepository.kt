@@ -26,7 +26,7 @@ class AuthRepository(
         val normalizedNickname = nickname.trim()
 
         if (authDao.getUserByUserId(normalizedUserId) != null) {
-            return Result.failure(IllegalArgumentException("이미 사용 중인 아이디입니다."))
+            return Result.failure(IllegalArgumentException("This login ID is already in use."))
         }
 
         val userAccount = UserAccount(
@@ -48,7 +48,7 @@ class AuthRepository(
         val normalizedUserId = userId.trim()
         val duplicatedUser = authDao.getUserByUserId(normalizedUserId)
         if (duplicatedUser != null && duplicatedUser.id != currentUser.id) {
-            return Result.failure(IllegalArgumentException("이미 사용 중인 아이디입니다."))
+            return Result.failure(IllegalArgumentException("This login ID is already in use."))
         }
 
         val updatedUser = currentUser.copy(

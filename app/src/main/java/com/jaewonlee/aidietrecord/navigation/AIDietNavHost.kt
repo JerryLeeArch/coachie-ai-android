@@ -139,7 +139,7 @@ fun AIDietNavHost() {
                     coroutineScope.launch {
                         val userAccount = authRepository.login(loginId, loginPassword)
                         if (userAccount == null) {
-                            authErrorMessage = "아이디 또는 비밀번호가 올바르지 않습니다."
+                            authErrorMessage = "The login ID or password is incorrect."
                         } else {
                             authSessionStore.saveUserId(userAccount.id)
                             setCurrentUser(userAccount)
@@ -173,7 +173,7 @@ fun AIDietNavHost() {
                                 }
                             }
                             .onFailure { throwable ->
-                                authErrorMessage = throwable.message ?: "회원가입에 실패했습니다."
+                                authErrorMessage = throwable.message ?: "Registration failed."
                             }
                     }
                 }
@@ -236,7 +236,21 @@ fun AIDietNavHost() {
             MealDetailScreen(
                 mealRecord = mealRecords.firstOrNull { it.id == mealId },
                 onBackClick = { navController.navigateUp() },
-                onEditClick = { navController.navigate(Route.EditMeal.createPath(mealId)) }
+                onEditClick = { navController.navigate(Route.EditMeal.createPath(mealId)) },
+                onDeleteClick = { mealRecord ->
+                    coroutineScope.launch {
+                        mealRepository.deleteMealRecord(mealRecord)
+                        val returnedToList = navController.popBackStack(
+                            route = Route.MealList.path,
+                            inclusive = false
+                        )
+                        if (!returnedToList) {
+                            navController.navigate(Route.MealList.path) {
+                                popUpTo(Route.Home.path)
+                            }
+                        }
+                    }
+                }
             )
         }
 
@@ -311,7 +325,7 @@ fun AIDietNavHost() {
                                     navController.navigateUp()
                                 }
                                 .onFailure { throwable ->
-                                    profileErrorMessage = throwable.message ?: "프로필 저장에 실패했습니다."
+                                    profileErrorMessage = throwable.message ?: "Profile update failed."
                                 }
                         }
                     }
@@ -385,9 +399,9 @@ private fun validateProfileInput(
     password: String
 ): String? {
     return when {
-        userId.isBlank() -> "아이디를 입력해 주세요."
-        nickname.isBlank() -> "닉네임을 입력해 주세요."
-        password.isNotBlank() && password.length < 4 -> "새 비밀번호는 4자 이상 입력해 주세요."
+        userId.isBlank() -> "Enter a login ID."
+        nickname.isBlank() -> "Enter a nickname."
+        password.isNotBlank() && password.length < 4 -> "New password must be at least 4 characters."
         else -> null
     }
 }

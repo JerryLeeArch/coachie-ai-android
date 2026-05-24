@@ -39,7 +39,7 @@ fun LoginScreen(
     var hideRemoteError by rememberSaveable { mutableStateOf(false) }
     val visibleErrorMessage = localErrorMessage ?: errorMessage.takeUnless { hideRemoteError }
 
-    ScreenScaffold(title = "AI 식단 기록 로그인") { innerPadding ->
+    ScreenScaffold(title = "AI Meal Log") { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
@@ -57,15 +57,15 @@ fun LoginScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Text(
-                        text = if (isRegisterMode) "회원가입" else "로그인",
+                        text = if (isRegisterMode) "Create Account" else "Log In",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         text = if (isRegisterMode) {
-                            "새 계정을 만든 뒤 바로 앱을 사용할 수 있습니다."
+                            "Create a local account and start tracking meals."
                         } else {
-                            "아이디와 비밀번호를 입력해 주세요."
+                            "Enter your login ID and password."
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -77,7 +77,7 @@ fun LoginScreen(
                             localErrorMessage = null
                             hideRemoteError = true
                         },
-                        label = { Text("아이디") },
+                        label = { Text("Login ID") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -89,7 +89,7 @@ fun LoginScreen(
                                 localErrorMessage = null
                                 hideRemoteError = true
                             },
-                            label = { Text("닉네임") },
+                            label = { Text("Nickname") },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
                         )
@@ -101,7 +101,7 @@ fun LoginScreen(
                             localErrorMessage = null
                             hideRemoteError = true
                         },
-                        label = { Text("비밀번호") },
+                        label = { Text("Password") },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth()
@@ -132,7 +132,7 @@ fun LoginScreen(
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (isRegisterMode) "회원가입 후 시작" else "로그인")
+                        Text(if (isRegisterMode) "Create Account" else "Log In")
                     }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -146,7 +146,7 @@ fun LoginScreen(
                             },
                             modifier = Modifier.weight(1f)
                         ) {
-                            Text(if (isRegisterMode) "로그인으로" else "회원가입")
+                            Text(if (isRegisterMode) "Back to Log In" else "Create Account")
                         }
                     }
                 }
@@ -162,10 +162,10 @@ private fun validateAuthInput(
     isRegisterMode: Boolean
 ): String? {
     return when {
-        userId.isBlank() -> "아이디를 입력해 주세요."
-        isRegisterMode && nickname.isBlank() -> "닉네임을 입력해 주세요."
-        password.isBlank() -> "비밀번호를 입력해 주세요."
-        password.length < 4 -> "비밀번호는 4자 이상 입력해 주세요."
+        userId.isBlank() -> "Enter a login ID."
+        isRegisterMode && nickname.isBlank() -> "Enter a nickname."
+        password.isBlank() -> "Enter a password."
+        password.length < 4 -> "Password must be at least 4 characters."
         else -> null
     }
 }

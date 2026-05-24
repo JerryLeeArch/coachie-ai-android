@@ -9,12 +9,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -28,10 +35,13 @@ import com.jaewonlee.aidietrecord.ui.util.formatMealDateTime
 fun MealDetailScreen(
     mealRecord: MealRecord?,
     onBackClick: () -> Unit,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    onDeleteClick: (MealRecord) -> Unit
 ) {
+    var showDeleteDialog by rememberSaveable { mutableStateOf(false) }
+
     ScreenScaffold(
-        title = "식단 상세",
+        title = "Meal Details",
         onBackClick = onBackClick
     ) { innerPadding ->
         Column(
@@ -48,7 +58,7 @@ fun MealDetailScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "식단 기록을 찾을 수 없습니다.",
+                        text = "Meal record not found.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(18.dp)
@@ -60,9 +70,9 @@ fun MealDetailScreen(
             UriImage(
                 imageUri = mealRecord.imageUri,
                 placeholderText = if (mealRecord.imageUri == null) {
-                    "저장된 음식 이미지 없음"
+                    "No meal photo saved"
                 } else {
-                    "음식 이미지 불러오기 실패"
+                    "Unable to load meal photo"
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -84,23 +94,34 @@ fun MealDetailScreen(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "기록 시간: ${formatMealDateTime(mealRecord.createdAt)}",
+                        text = "Logged at: ${formatMealDateTime(mealRecord.createdAt)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color(0xFF52624F)
                     )
                     Text("${mealRecord.calories} kcal", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        text = mealRecord.memo.ifBlank { "메모 없음" },
+                        text = mealRecord.memo.ifBlank { "No memo" },
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
             }
 
-            Button(
-                onClick = onEditClick,
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text("수정")
+                Button(
+                    onClick = onEditClick,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Edit")
+                }
+                OutlinedButton(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Delete")
+                }
             }
 
             Card(
@@ -113,7 +134,7 @@ fun MealDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "음식 목록",
+                        text = "Food Items",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -133,13 +154,13 @@ fun MealDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "영양분 구성",
+                        text = "Nutrition",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    NutritionInfoRow("탄수화물", "${mealRecord.carbsGram}g")
-                    NutritionInfoRow("단백질", "${mealRecord.proteinGram}g")
-                    NutritionInfoRow("지방", "${mealRecord.fatGram}g")
+                    NutritionInfoRow("Carbs", "${mealRecord.carbsGram}g")
+                    NutritionInfoRow("Protein", "${mealRecord.proteinGram}g")
+                    NutritionInfoRow("Fat", "${mealRecord.fatGram}g")
                     NutritionInfoRow("Fiber", "${mealRecord.fiberGram}g")
                     NutritionInfoRow("Sugar", "${mealRecord.sugarGram}g")
                     NutritionInfoRow("Sodium", "${mealRecord.sodiumMilligram}mg")
@@ -156,20 +177,45 @@ fun MealDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Text(
-                        text = "AI 분석 기록",
+                        text = "AI Analysis",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    Text("추정 음식명: ${mealRecord.aiFoodName ?: "없음"}")
-                    Text("추정 칼로리: ${mealRecord.aiCalories ?: 0} kcal")
+                    Text("Estimated food: ${mealRecord.aiFoodName ?: "None"}")
+                    Text("Estimated calories: ${mealRecord.aiCalories ?: 0} kcal")
                     Text(
-                        text = mealRecord.aiSummary ?: "AI 검수 기록 없음",
+                        text = mealRecord.aiSummary ?: "No AI review saved.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
         }
+    }
+
+    if (showDeleteDialog && mealRecord != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete meal?") },
+            text = {
+                Text("This meal record will be permanently removed.")
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDeleteClick(mealRecord)
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -192,7 +238,7 @@ private fun MealFoodInfoRow(food: MealFoodRecord) {
             )
         }
         Text(
-            text = "탄 ${food.carbsGram}g · 단 ${food.proteinGram}g · 지 ${food.fatGram}g",
+            text = "Carbs ${food.carbsGram}g · Protein ${food.proteinGram}g · Fat ${food.fatGram}g",
             style = MaterialTheme.typography.bodySmall,
             color = Color(0xFF52624F)
         )

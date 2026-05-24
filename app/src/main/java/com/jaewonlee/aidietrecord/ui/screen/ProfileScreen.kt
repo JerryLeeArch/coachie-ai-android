@@ -30,7 +30,7 @@ fun ProfileScreen(
     onLogoutClick: () -> Unit
 ) {
     ScreenScaffold(
-        title = "프로필",
+        title = "Profile",
         onBackClick = onBackClick
     ) { innerPadding ->
         Column(
@@ -41,28 +41,28 @@ fun ProfileScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "닉네임, 아이디, 비밀번호를 수정합니다. 비밀번호는 비워두면 기존 값이 유지됩니다.",
+                text = "Update your nickname, login ID, or password. Leave the password blank to keep the current one.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             OutlinedTextField(
                 value = nickname,
                 onValueChange = onNicknameChange,
-                label = { Text("닉네임") },
+                label = { Text("Nickname") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = userId,
                 onValueChange = onUserIdChange,
-                label = { Text("아이디") },
+                label = { Text("Login ID") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
             OutlinedTextField(
                 value = password,
                 onValueChange = onPasswordChange,
-                label = { Text("새 비밀번호") },
+                label = { Text("New Password") },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier.fillMaxWidth()
@@ -78,13 +78,13 @@ fun ProfileScreen(
                 onClick = onSaveClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("프로필 저장")
+                Text("Save Profile")
             }
             OutlinedButton(
                 onClick = onLogoutClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("로그아웃")
+                Text("Log Out")
             }
         }
     }
