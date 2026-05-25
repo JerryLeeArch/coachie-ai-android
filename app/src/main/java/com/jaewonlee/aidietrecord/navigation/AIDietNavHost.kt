@@ -496,10 +496,15 @@ fun AIDietNavHost() {
             RecentStatsScreen(
                 mealRecords = mealRecords,
                 goalPlans = goalPlans,
+                bodyMeasurements = bodyMeasurements,
                 targetCalories = activeGoalPlan?.dailyCalories
                     ?: targetCalories.toPositiveIntOrDefault(2000),
+                targetCarbsGram = activeGoalPlan?.dailyCarbsGram
+                    ?: targetCarbsGram.toPositiveIntOrDefault(250),
                 targetProteinGram = activeGoalPlan?.dailyProteinGram
                     ?: proteinGoal.toPositiveIntOrDefault(100),
+                targetFatGram = activeGoalPlan?.dailyFatGram
+                    ?: targetFatGram.toPositiveIntOrDefault(60),
                 onBackClick = { navController.navigateUp() }
             )
         }

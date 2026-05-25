@@ -31,23 +31,36 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.jaewonlee.aidietrecord.data.model.BodyMeasurementEntity
 import com.jaewonlee.aidietrecord.data.model.GoalPlanEntity
 import com.jaewonlee.aidietrecord.data.model.MealRecord
 import com.jaewonlee.aidietrecord.ui.util.formatMealDate
 import com.jaewonlee.aidietrecord.ui.util.mealRecordDate
 import java.time.LocalDate
+import kotlin.math.abs
 import kotlin.math.max
 
 @Composable
 fun RecentStatsScreen(
     mealRecords: List<MealRecord>,
     goalPlans: List<GoalPlanEntity>,
+    bodyMeasurements: List<BodyMeasurementEntity>,
     targetCalories: Int,
+    targetCarbsGram: Int,
     targetProteinGram: Int,
+    targetFatGram: Int,
     onBackClick: () -> Unit
 ) {
     val dailyStats = remember(mealRecords) { mealRecords.toDailyStats() }
     val recentStats = dailyStats.take(7)
+    val recentBodyMeasurements = remember(bodyMeasurements) {
+        bodyMeasurements
+            .sortedWith(
+                compareByDescending<BodyMeasurementEntity> { it.measuredEpochDay }
+                    .thenByDescending { it.createdAt }
+            )
+            .take(7)
+    }
     val latestStats = recentStats.firstOrNull()
     val previousStats = recentStats.drop(1).firstOrNull()
     val averageCalories = recentStats.averageOf { it.calories }
@@ -132,8 +145,28 @@ fun RecentStatsScreen(
                     NutritionTrendChart(
                         stats = recentStats,
                         goalPlans = goalPlans,
-                        fallbackTargetProteinGram = targetProteinGram
+                        fallbackTargetCarbsGram = targetCarbsGram,
+                        fallbackTargetProteinGram = targetProteinGram,
+                        fallbackTargetFatGram = targetFatGram
                     )
+                }
+            }
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = Color.White),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Body Progress",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    BodyProgressPanel(measurements = recentBodyMeasurements)
                 }
             }
         }
@@ -258,7 +291,9 @@ private fun CalorieTrendChart(
 private fun NutritionTrendChart(
     stats: List<DailyNutritionStats>,
     goalPlans: List<GoalPlanEntity>,
-    fallbackTargetProteinGram: Int
+    fallbackTargetCarbsGram: Int,
+    fallbackTargetProteinGram: Int,
+    fallbackTargetFatGram: Int
 ) {
     if (stats.isEmpty()) {
         EmptyChartText("No nutrition records yet.")
@@ -267,9 +302,9 @@ private fun NutritionTrendChart(
 
     val points = stats.asReversed().map { dailyStats ->
         val goalPlan = goalPlans.goalFor(dailyStats.date)
-        val targetCarbsGram = goalPlan?.dailyCarbsGram ?: 250
+        val targetCarbsGram = goalPlan?.dailyCarbsGram ?: fallbackTargetCarbsGram
         val targetProteinGram = goalPlan?.dailyProteinGram ?: fallbackTargetProteinGram
-        val targetFatGram = goalPlan?.dailyFatGram ?: 60
+        val targetFatGram = goalPlan?.dailyFatGram ?: fallbackTargetFatGram
 
         MacroChartPoint(
             date = dailyStats.date,
@@ -373,6 +408,170 @@ private fun NutritionTrendChart(
                 ChartLegendItem("Fat", Color(0xFFD18B2F)),
                 ChartLegendItem("Goal", Color(0xFF9AA39A))
             )
+        )
+    }
+}
+
+@Composable
+private fun BodyProgressPanel(measurements: List<BodyMeasurementEntity>) {
+    if (measurements.isEmpty()) {
+        EmptyChartText("No body status records yet.")
+        return
+    }
+
+    val chronologicalMeasurements = measurements.asReversed()
+    val latestMeasurement = measurements.first()
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            StatsChip(
+                label = "Weight",
+                value = latestMeasurement.weightKg.formatBodyMetric("kg"),
+                modifier = Modifier.weight(1f)
+            )
+            StatsChip(
+                label = "Muscle",
+                value = latestMeasurement.muscleMassKg.formatBodyMetric("kg"),
+                modifier = Modifier.weight(1f)
+            )
+            StatsChip(
+                label = "Body Fat",
+                value = latestMeasurement.bodyFatPercent.formatBodyMetric("%"),
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        BodyMeasurementTrendChart(measurements = chronologicalMeasurements)
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            measurements.forEach { measurement ->
+                BodyMeasurementRow(measurement = measurement)
+            }
+        }
+    }
+}
+
+@Composable
+private fun BodyMeasurementTrendChart(measurements: List<BodyMeasurementEntity>) {
+    val points = measurements.map { measurement ->
+        BodyChartPoint(
+            date = LocalDate.ofEpochDay(measurement.measuredEpochDay),
+            weightKg = measurement.weightKg,
+            muscleMassKg = measurement.muscleMassKg,
+            bodyFatPercent = measurement.bodyFatPercent
+        )
+    }
+    val series = listOf(
+        BodyChartSeries(
+            label = "Weight",
+            color = Color(0xFF5269A6),
+            values = points.mapIndexedNotNull { index, point ->
+                point.weightKg?.let { BodyChartValue(index = index, value = it) }
+            }
+        ),
+        BodyChartSeries(
+            label = "Muscle",
+            color = Color(0xFF2D6A4F),
+            values = points.mapIndexedNotNull { index, point ->
+                point.muscleMassKg?.let { BodyChartValue(index = index, value = it) }
+            }
+        ),
+        BodyChartSeries(
+            label = "Body Fat",
+            color = Color(0xFFD18B2F),
+            values = points.mapIndexedNotNull { index, point ->
+                point.bodyFatPercent?.let { BodyChartValue(index = index, value = it) }
+            }
+        )
+    ).filter { it.values.isNotEmpty() }
+
+    if (series.isEmpty()) {
+        EmptyChartText("Saved body records do not have chartable values yet.")
+        return
+    }
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(176.dp)
+        ) {
+            val leftPadding = 8.dp.toPx()
+            val rightPadding = 8.dp.toPx()
+            val topPadding = 12.dp.toPx()
+            val bottomPadding = 20.dp.toPx()
+            val chartWidth = size.width - leftPadding - rightPadding
+            val chartHeight = size.height - topPadding - bottomPadding
+            val gridColor = Color(0xFFE2E8DF)
+
+            fun x(index: Int): Float {
+                return if (points.size == 1) {
+                    leftPadding + chartWidth / 2f
+                } else {
+                    leftPadding + chartWidth * (index / points.lastIndex.toFloat())
+                }
+            }
+
+            repeat(4) { index ->
+                val lineY = topPadding + chartHeight * (index / 3f)
+                drawLine(
+                    color = gridColor,
+                    start = Offset(leftPadding, lineY),
+                    end = Offset(leftPadding + chartWidth, lineY),
+                    strokeWidth = 1.dp.toPx()
+                )
+            }
+
+            series.forEach { bodySeries ->
+                val minValue = bodySeries.values.minOf { it.value }
+                val maxValue = bodySeries.values.maxOf { it.value }
+                val linePoints = bodySeries.values.map { bodyValue ->
+                    val normalizedValue = normalizeBodyChartValue(
+                        value = bodyValue.value,
+                        minValue = minValue,
+                        maxValue = maxValue
+                    )
+                    Offset(
+                        x = x(bodyValue.index),
+                        y = topPadding + chartHeight * (1f - normalizedValue)
+                    )
+                }
+                drawChartLine(
+                    points = linePoints,
+                    color = bodySeries.color,
+                    strokeWidth = 3.dp.toPx()
+                )
+            }
+        }
+
+        ChartDateLabels(points.first().date, points.last().date)
+        ChartLegend(
+            items = series.map { ChartLegendItem(it.label, it.color) }
+        )
+    }
+}
+
+@Composable
+private fun BodyMeasurementRow(measurement: BodyMeasurementEntity) {
+    val measuredDate = LocalDate.ofEpochDay(measurement.measuredEpochDay)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFEFF6EE), RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = formatMealDate(measuredDate),
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF191C20)
+        )
+        Text(
+            text = measurement.bodyMeasurementValuesText(),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color(0xFF52624F)
         )
     }
 }
@@ -505,6 +704,24 @@ private data class ChartLegendItem(
     val color: Color
 )
 
+private data class BodyChartPoint(
+    val date: LocalDate,
+    val weightKg: Double?,
+    val muscleMassKg: Double?,
+    val bodyFatPercent: Double?
+)
+
+private data class BodyChartSeries(
+    val label: String,
+    val color: Color,
+    val values: List<BodyChartValue>
+)
+
+private data class BodyChartValue(
+    val index: Int,
+    val value: Double
+)
+
 private data class DailyNutritionStats(
     val date: LocalDate,
     val recordCount: Int,
@@ -547,6 +764,39 @@ private fun buildTrendText(
         calorieDiff < 0 -> "You ate ${-calorieDiff} kcal less than the previous logged day."
         else -> "You ate the same calories as the previous logged day."
     }
+}
+
+private fun normalizeBodyChartValue(
+    value: Double,
+    minValue: Double,
+    maxValue: Double
+): Float {
+    if (abs(maxValue - minValue) < 0.0001) {
+        return 0.5f
+    }
+    return ((value - minValue) / (maxValue - minValue)).toFloat().coerceIn(0f, 1f)
+}
+
+private fun BodyMeasurementEntity.bodyMeasurementValuesText(): String {
+    val values = buildList {
+        weightKg?.let { add("Weight ${it.formatBodyMetric("kg")}") }
+        muscleMassKg?.let { add("Muscle ${it.formatBodyMetric("kg")}") }
+        basalMetabolicRateKcal?.let { add("BMR ${it}kcal") }
+        bodyFatMassKg?.let { add("Fat mass ${it.formatBodyMetric("kg")}") }
+        bodyFatPercent?.let { add("Body fat ${it.formatBodyMetric("%")}") }
+    }
+    return values.joinToString(" · ").ifBlank { "No values saved" }
+}
+
+private fun Double?.formatBodyMetric(unit: String): String {
+    return this?.let { value ->
+        val numberText = if (abs(value % 1.0) < 0.0001) {
+            value.toInt().toString()
+        } else {
+            "%.1f".format(value)
+        }
+        "$numberText$unit"
+    } ?: "-"
 }
 
 private fun List<GoalPlanEntity>.goalFor(date: LocalDate): GoalPlanEntity? {
