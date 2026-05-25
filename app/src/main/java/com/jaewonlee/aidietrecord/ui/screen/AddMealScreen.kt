@@ -7,11 +7,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealFoodDraft
 import com.jaewonlee.aidietrecord.data.model.MealRecord
@@ -89,6 +92,7 @@ fun AddMealScreen(
                         draft = draft,
                         index = index,
                         canRemove = foodDrafts.size > 1,
+                        showNutritionFields = isEditMode,
                         onFoodNameChange = { value ->
                             updateDraft(draft.id) { it.copy(foodName = value) }
                         },
@@ -98,6 +102,27 @@ fun AddMealScreen(
                         onImageSelected = { value ->
                             updateDraft(draft.id) { it.copy(imageUri = value) }
                             errorMessage = null
+                        },
+                        onCaloriesChange = { value ->
+                            updateDraft(draft.id) { it.copy(calories = value) }
+                        },
+                        onCarbsChange = { value ->
+                            updateDraft(draft.id) { it.copy(carbsGram = value) }
+                        },
+                        onProteinChange = { value ->
+                            updateDraft(draft.id) { it.copy(proteinGram = value) }
+                        },
+                        onFatChange = { value ->
+                            updateDraft(draft.id) { it.copy(fatGram = value) }
+                        },
+                        onFiberChange = { value ->
+                            updateDraft(draft.id) { it.copy(fiberGram = value) }
+                        },
+                        onSugarChange = { value ->
+                            updateDraft(draft.id) { it.copy(sugarGram = value) }
+                        },
+                        onSodiumChange = { value ->
+                            updateDraft(draft.id) { it.copy(sodiumMilligram = value) }
                         },
                         onRemoveClick = {
                             foodDrafts.removeAll { it.id == draft.id }
@@ -199,9 +224,17 @@ private fun FoodDraftCard(
     draft: FoodDraftUiState,
     index: Int,
     canRemove: Boolean,
+    showNutritionFields: Boolean,
     onFoodNameChange: (String) -> Unit,
     onDescriptionChange: (String) -> Unit,
     onImageSelected: (String?) -> Unit,
+    onCaloriesChange: (String) -> Unit,
+    onCarbsChange: (String) -> Unit,
+    onProteinChange: (String) -> Unit,
+    onFatChange: (String) -> Unit,
+    onFiberChange: (String) -> Unit,
+    onSugarChange: (String) -> Unit,
+    onSodiumChange: (String) -> Unit,
     onRemoveClick: () -> Unit
 ) {
     val context = LocalContext.current
@@ -287,15 +320,112 @@ private fun FoodDraftCard(
                 minLines = 5,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            if (showNutritionFields) {
+                Text(
+                    text = "Nutrition Details",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                NutritionFieldRow {
+                    NutritionNumberField(
+                        label = "Calories (kcal)",
+                        value = draft.calories,
+                        onValueChange = onCaloriesChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                    NutritionNumberField(
+                        label = "Carbs (g)",
+                        value = draft.carbsGram,
+                        onValueChange = onCarbsChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                NutritionFieldRow {
+                    NutritionNumberField(
+                        label = "Protein (g)",
+                        value = draft.proteinGram,
+                        onValueChange = onProteinChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                    NutritionNumberField(
+                        label = "Fat (g)",
+                        value = draft.fatGram,
+                        onValueChange = onFatChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                NutritionFieldRow {
+                    NutritionNumberField(
+                        label = "Fiber (g)",
+                        value = draft.fiberGram,
+                        onValueChange = onFiberChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                    NutritionNumberField(
+                        label = "Sugar (g)",
+                        value = draft.sugarGram,
+                        onValueChange = onSugarChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                NutritionNumberField(
+                    label = "Sodium (mg)",
+                    value = draft.sodiumMilligram,
+                    onValueChange = onSodiumChange,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun NutritionFieldRow(content: @Composable RowScope.() -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        content = content
+    )
+}
+
+@Composable
+private fun NutritionNumberField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { input ->
+            if (input.isWholeNumberInput()) {
+                onValueChange(input)
+            }
+        },
+        label = { Text(label) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+        singleLine = true,
+        modifier = modifier
+    )
 }
 
 private data class FoodDraftUiState(
     val id: Long,
     val foodName: String = "",
     val description: String = "",
-    val imageUri: String? = null
+    val imageUri: String? = null,
+    val calories: String = "",
+    val carbsGram: String = "",
+    val proteinGram: String = "",
+    val fatGram: String = "",
+    val fiberGram: String = "",
+    val sugarGram: String = "",
+    val sodiumMilligram: String = ""
 )
 
 private fun MealRecord?.toFoodDrafts(): List<FoodDraftUiState> {
@@ -309,7 +439,14 @@ private fun MealRecord?.toFoodDrafts(): List<FoodDraftUiState> {
             id = index + 1L,
             foodName = food.foodName,
             description = food.description,
-            imageUri = food.imageUri ?: this?.imageUri?.takeIf { index == 0 }
+            imageUri = food.imageUri ?: this?.imageUri?.takeIf { index == 0 },
+            calories = food.calories.toString(),
+            carbsGram = food.carbsGram.toString(),
+            proteinGram = food.proteinGram.toString(),
+            fatGram = food.fatGram.toString(),
+            fiberGram = food.fiberGram.toString(),
+            sugarGram = food.sugarGram.toString(),
+            sodiumMilligram = food.sodiumMilligram.toString()
         )
     }
 }
@@ -318,7 +455,14 @@ private fun FoodDraftUiState.toMealFoodDraft(): MealFoodDraft {
     return MealFoodDraft(
         foodName = foodName.trim(),
         description = description.trim(),
-        imageUri = imageUri
+        imageUri = imageUri,
+        calories = calories.toNullableInt(),
+        carbsGram = carbsGram.toNullableInt(),
+        proteinGram = proteinGram.toNullableInt(),
+        fatGram = fatGram.toNullableInt(),
+        fiberGram = fiberGram.toNullableInt(),
+        sugarGram = sugarGram.toNullableInt(),
+        sodiumMilligram = sodiumMilligram.toNullableInt()
     )
 }
 
@@ -334,4 +478,12 @@ private fun List<MealFoodDraft>.toMealMemo(fallbackMemo: String): String {
 
 private fun itemCountText(count: Int): String {
     return if (count == 1) "1 item" else "$count items"
+}
+
+private fun String.isWholeNumberInput(): Boolean {
+    return all { it.isDigit() }
+}
+
+private fun String.toNullableInt(): Int? {
+    return trim().takeIf { it.isNotBlank() }?.toIntOrNull()
 }

@@ -18,8 +18,10 @@ import androidx.navigation.navArgument
 import com.jaewonlee.aidietrecord.data.ai.GeminiMealAnalyzer
 import com.jaewonlee.aidietrecord.data.local.AuthSessionStore
 import com.jaewonlee.aidietrecord.data.local.MealDatabase
+import com.jaewonlee.aidietrecord.data.model.GoalPlanEntity
 import com.jaewonlee.aidietrecord.data.model.UserAccount
 import com.jaewonlee.aidietrecord.data.repository.AuthRepository
+import com.jaewonlee.aidietrecord.data.repository.GoalRepository
 import com.jaewonlee.aidietrecord.data.repository.MealReviewRepository
 import com.jaewonlee.aidietrecord.data.repository.MealRepository
 import com.jaewonlee.aidietrecord.ui.screen.AddMealScreen
@@ -30,6 +32,7 @@ import com.jaewonlee.aidietrecord.ui.screen.MealDetailScreen
 import com.jaewonlee.aidietrecord.ui.screen.MealListScreen
 import com.jaewonlee.aidietrecord.ui.screen.ProfileScreen
 import com.jaewonlee.aidietrecord.ui.screen.RecentStatsScreen
+import java.time.LocalDate
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
@@ -45,6 +48,9 @@ fun AIDietNavHost() {
     }
     val mealRepository = remember(mealDatabase) {
         MealRepository(mealDatabase)
+    }
+    val goalRepository = remember(mealDatabase) {
+        GoalRepository(mealDatabase)
     }
     val mealReviewRepository = remember(context.applicationContext) {
         MealReviewRepository(
@@ -78,6 +84,31 @@ fun AIDietNavHost() {
         }
     }
     val mealRecords by mealRecordsFlow.collectAsState(initial = emptyList())
+    val todayEpochDay = remember { LocalDate.now().toEpochDay() }
+    val goalPlansFlow = remember(goalRepository, currentUserId) {
+        if (currentUserId > 0) {
+            goalRepository.observeGoalPlans(currentUserId)
+        } else {
+            flowOf(emptyList())
+        }
+    }
+    val activeGoalPlanFlow = remember(goalRepository, currentUserId, todayEpochDay) {
+        if (currentUserId > 0) {
+            goalRepository.observeActiveGoalPlan(currentUserId, todayEpochDay)
+        } else {
+            flowOf<GoalPlanEntity?>(null)
+        }
+    }
+    val goalPlans by goalPlansFlow.collectAsState(initial = emptyList())
+    val activeGoalPlan by activeGoalPlanFlow.collectAsState(initial = null)
+    val bodyMeasurementsFlow = remember(goalRepository, currentUserId) {
+        if (currentUserId > 0) {
+            goalRepository.observeBodyMeasurements(currentUserId)
+        } else {
+            flowOf(emptyList())
+        }
+    }
+    val bodyMeasurements by bodyMeasurementsFlow.collectAsState(initial = emptyList())
     val coroutineScope = rememberCoroutineScope()
 
     var nickname by rememberSaveable { mutableStateOf("") }
@@ -85,11 +116,27 @@ fun AIDietNavHost() {
     var password by rememberSaveable { mutableStateOf("") }
     var authErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var profileErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    val defaultGoalStartDate = remember { LocalDate.now().toString() }
+    val defaultGoalEndDate = remember { LocalDate.now().plusWeeks(8).minusDays(1).toString() }
+    var goalStartDate by rememberSaveable { mutableStateOf(defaultGoalStartDate) }
+    var goalEndDate by rememberSaveable { mutableStateOf(defaultGoalEndDate) }
+    var goalPeriodMode by rememberSaveable { mutableStateOf("TARGET_DATE") }
     var currentWeight by rememberSaveable { mutableStateOf("72.0") }
+    var currentMuscleMass by rememberSaveable { mutableStateOf("") }
+    var currentMetabolicRate by rememberSaveable { mutableStateOf("") }
+    var currentBodyFatPercent by rememberSaveable { mutableStateOf("") }
     var targetWeight by rememberSaveable { mutableStateOf("69.0") }
+    var targetMuscleMass by rememberSaveable { mutableStateOf("") }
+    var targetBodyFatPercent by rememberSaveable { mutableStateOf("") }
     var targetWeeks by rememberSaveable { mutableStateOf("8") }
     var targetCalories by rememberSaveable { mutableStateOf("1900") }
+    var targetCarbsGram by rememberSaveable { mutableStateOf("220") }
     var proteinGoal by rememberSaveable { mutableStateOf("110") }
+    var targetFatGram by rememberSaveable { mutableStateOf("60") }
+    var targetFiberGram by rememberSaveable { mutableStateOf("28") }
+    var targetSugarGram by rememberSaveable { mutableStateOf("45") }
+    var targetSodiumMilligram by rememberSaveable { mutableStateOf("2300") }
+    var manualTargetsEnabled by rememberSaveable { mutableStateOf(false) }
     var mealSaveInProgress by rememberSaveable { mutableStateOf(false) }
     var authRestoreCompleted by rememberSaveable {
         mutableStateOf(authSessionStore.getSavedUserId() <= 0L)
@@ -124,6 +171,30 @@ fun AIDietNavHost() {
         authRestoreCompleted = true
     }
 
+    LaunchedEffect(activeGoalPlan?.id) {
+        activeGoalPlan?.let { goalPlan ->
+            goalStartDate = LocalDate.ofEpochDay(goalPlan.validFromEpochDay).toString()
+            goalEndDate = LocalDate.ofEpochDay(goalPlan.validToEpochDay - 1L).toString()
+            currentWeight = goalPlan.startWeightKg.toGoalNumberText()
+            currentMuscleMass = goalPlan.startMuscleMassKg?.toGoalNumberText().orEmpty()
+            currentBodyFatPercent = goalPlan.startBodyFatPercent?.toGoalNumberText().orEmpty()
+            targetWeight = goalPlan.targetWeightKg?.toGoalNumberText().orEmpty()
+            targetMuscleMass = goalPlan.targetMuscleMassKg?.toGoalNumberText().orEmpty()
+            targetBodyFatPercent = goalPlan.targetBodyFatPercent?.toGoalNumberText().orEmpty()
+            targetWeeks = (((goalPlan.validToEpochDay - goalPlan.validFromEpochDay) + 6L) / 7L)
+                .coerceAtLeast(1L)
+                .toString()
+            targetCalories = goalPlan.dailyCalories.toString()
+            targetCarbsGram = goalPlan.dailyCarbsGram.toString()
+            proteinGoal = goalPlan.dailyProteinGram.toString()
+            targetFatGram = goalPlan.dailyFatGram.toString()
+            targetFiberGram = goalPlan.dailyFiberGram.toString()
+            targetSugarGram = goalPlan.dailySugarGram.toString()
+            targetSodiumMilligram = goalPlan.dailySodiumMilligram.toString()
+            manualTargetsEnabled = goalPlan.plannerVersion.startsWith("manual")
+        }
+    }
+
     if (!authRestoreCompleted) {
         return
     }
@@ -146,6 +217,7 @@ fun AIDietNavHost() {
                             nickname = userAccount.nickname
                             userId = userAccount.userId
                             password = ""
+                            currentMetabolicRate = ""
                             authErrorMessage = null
                             navController.navigate(Route.Home.path) {
                                 popUpTo(Route.Login.path) { inclusive = true }
@@ -167,6 +239,7 @@ fun AIDietNavHost() {
                                 nickname = userAccount.nickname
                                 userId = userAccount.userId
                                 password = ""
+                                currentMetabolicRate = ""
                                 authErrorMessage = null
                                 navController.navigate(Route.Home.path) {
                                     popUpTo(Route.Login.path) { inclusive = true }
@@ -184,8 +257,20 @@ fun AIDietNavHost() {
             HomeScreen(
                 nickname = nickname,
                 mealRecords = mealRecords,
-                targetCalories = targetCalories.toPositiveIntOrDefault(2000),
-                targetProteinGram = proteinGoal.toPositiveIntOrDefault(100),
+                targetCalories = activeGoalPlan?.dailyCalories
+                    ?: targetCalories.toPositiveIntOrDefault(2000),
+                targetCarbsGram = activeGoalPlan?.dailyCarbsGram
+                    ?: targetCarbsGram.toPositiveIntOrDefault(250),
+                targetProteinGram = activeGoalPlan?.dailyProteinGram
+                    ?: proteinGoal.toPositiveIntOrDefault(100),
+                targetFatGram = activeGoalPlan?.dailyFatGram
+                    ?: targetFatGram.toPositiveIntOrDefault(60),
+                targetFiberGram = activeGoalPlan?.dailyFiberGram
+                    ?: targetFiberGram.toPositiveIntOrDefault(25),
+                targetSugarGram = activeGoalPlan?.dailySugarGram
+                    ?: targetSugarGram.toPositiveIntOrDefault(50),
+                targetSodiumMilligram = activeGoalPlan?.dailySodiumMilligram
+                    ?: targetSodiumMilligram.toPositiveIntOrDefault(2300),
                 onAddMealClick = { navController.navigate(Route.AddMeal.path) },
                 onMealListClick = { navController.navigate(Route.MealList.path) },
                 onGoalSettingsClick = { navController.navigate(Route.GoalSettings.path) },
@@ -336,6 +421,7 @@ fun AIDietNavHost() {
                     nickname = ""
                     userId = ""
                     password = ""
+                    currentMetabolicRate = ""
                     profileErrorMessage = null
                     authErrorMessage = null
                     navController.navigate(Route.Login.path) {
@@ -347,16 +433,61 @@ fun AIDietNavHost() {
 
         composable(Route.GoalSettings.path) {
             GoalSettingsScreen(
+                goalStartDate = goalStartDate,
+                onGoalStartDateChange = { goalStartDate = it },
+                goalEndDate = goalEndDate,
+                onGoalEndDateChange = { goalEndDate = it },
+                goalPeriodMode = goalPeriodMode,
+                onGoalPeriodModeChange = { goalPeriodMode = it },
                 currentWeight = currentWeight,
                 onCurrentWeightChange = { currentWeight = it },
+                currentMuscleMass = currentMuscleMass,
+                onCurrentMuscleMassChange = { currentMuscleMass = it },
+                currentMetabolicRate = currentMetabolicRate,
+                onCurrentMetabolicRateChange = { currentMetabolicRate = it },
+                currentBodyFatPercent = currentBodyFatPercent,
+                onCurrentBodyFatPercentChange = { currentBodyFatPercent = it },
                 targetWeight = targetWeight,
                 onTargetWeightChange = { targetWeight = it },
+                targetMuscleMass = targetMuscleMass,
+                onTargetMuscleMassChange = { targetMuscleMass = it },
+                targetBodyFatPercent = targetBodyFatPercent,
+                onTargetBodyFatPercentChange = { targetBodyFatPercent = it },
                 targetWeeks = targetWeeks,
                 onTargetWeeksChange = { targetWeeks = it },
                 targetCalories = targetCalories,
                 onTargetCaloriesChange = { targetCalories = it },
+                targetCarbsGram = targetCarbsGram,
+                onTargetCarbsGramChange = { targetCarbsGram = it },
                 proteinGoal = proteinGoal,
                 onProteinGoalChange = { proteinGoal = it },
+                targetFatGram = targetFatGram,
+                onTargetFatGramChange = { targetFatGram = it },
+                targetFiberGram = targetFiberGram,
+                onTargetFiberGramChange = { targetFiberGram = it },
+                targetSugarGram = targetSugarGram,
+                onTargetSugarGramChange = { targetSugarGram = it },
+                targetSodiumMilligram = targetSodiumMilligram,
+                onTargetSodiumMilligramChange = { targetSodiumMilligram = it },
+                manualTargetsEnabled = manualTargetsEnabled,
+                onManualTargetsEnabledChange = { manualTargetsEnabled = it },
+                currentGoalPlan = activeGoalPlan,
+                latestBodyMeasurement = bodyMeasurements.firstOrNull(),
+                onSaveBodyMeasurement = { bodyMeasurementDraft ->
+                    if (currentUserId > 0) {
+                        coroutineScope.launch {
+                            goalRepository.saveBodyMeasurement(currentUserId, bodyMeasurementDraft)
+                        }
+                    }
+                },
+                onSaveClick = { goalPlanDraft ->
+                    if (currentUserId > 0) {
+                        coroutineScope.launch {
+                            goalRepository.saveGoalPlan(currentUserId, goalPlanDraft)
+                            navController.navigateUp()
+                        }
+                    }
+                },
                 onBackClick = { navController.navigateUp() }
             )
         }
@@ -364,8 +495,11 @@ fun AIDietNavHost() {
         composable(Route.RecentStats.path) {
             RecentStatsScreen(
                 mealRecords = mealRecords,
-                targetCalories = targetCalories.toPositiveIntOrDefault(2000),
-                targetProteinGram = proteinGoal.toPositiveIntOrDefault(100),
+                goalPlans = goalPlans,
+                targetCalories = activeGoalPlan?.dailyCalories
+                    ?: targetCalories.toPositiveIntOrDefault(2000),
+                targetProteinGram = activeGoalPlan?.dailyProteinGram
+                    ?: proteinGoal.toPositiveIntOrDefault(100),
                 onBackClick = { navController.navigateUp() }
             )
         }
@@ -374,6 +508,14 @@ fun AIDietNavHost() {
 
 private fun String.toPositiveIntOrDefault(defaultValue: Int): Int {
     return toIntOrNull()?.takeIf { it > 0 } ?: defaultValue
+}
+
+private fun Double.toGoalNumberText(): String {
+    return if (this % 1.0 == 0.0) {
+        toInt().toString()
+    } else {
+        "%.1f".format(this)
+    }
 }
 
 private fun currentUserOrNull(

@@ -57,7 +57,12 @@ fun HomeScreen(
     nickname: String,
     mealRecords: List<MealRecord>,
     targetCalories: Int,
+    targetCarbsGram: Int,
     targetProteinGram: Int,
+    targetFatGram: Int,
+    targetFiberGram: Int,
+    targetSugarGram: Int,
+    targetSodiumMilligram: Int,
     onAddMealClick: () -> Unit,
     onMealListClick: () -> Unit,
     onGoalSettingsClick: () -> Unit,
@@ -117,7 +122,12 @@ fun HomeScreen(
                 fiberGram = totalFiber,
                 sugarGram = totalSugar,
                 sodiumMilligram = totalSodium,
-                targetProteinGram = targetProteinGram.coerceAtLeast(1)
+                targetCarbsGram = targetCarbsGram.coerceAtLeast(1),
+                targetProteinGram = targetProteinGram.coerceAtLeast(1),
+                targetFatGram = targetFatGram.coerceAtLeast(1),
+                targetFiberGram = targetFiberGram.coerceAtLeast(1),
+                targetSugarGram = targetSugarGram.coerceAtLeast(1),
+                targetSodiumMilligram = targetSodiumMilligram.coerceAtLeast(1)
             )
 
             Spacer(modifier = Modifier.height(4.dp))
@@ -243,7 +253,12 @@ private fun NutritionPanel(
     fiberGram: Int,
     sugarGram: Int,
     sodiumMilligram: Int,
-    targetProteinGram: Int
+    targetCarbsGram: Int,
+    targetProteinGram: Int,
+    targetFatGram: Int,
+    targetFiberGram: Int,
+    targetSugarGram: Int,
+    targetSodiumMilligram: Int
 ) {
     Column(
         modifier = Modifier
@@ -265,9 +280,9 @@ private fun NutritionPanel(
             fatGram = fatGram
         )
 
-        NutritionTargetRow("Carbs", carbsGram, 250, "g", CarbColor)
+        NutritionTargetRow("Carbs", carbsGram, targetCarbsGram, "g", CarbColor)
         NutritionTargetRow("Protein", proteinGram, targetProteinGram, "g", ProteinColor)
-        NutritionTargetRow("Fat", fatGram, 60, "g", FatColor)
+        NutritionTargetRow("Fat", fatGram, targetFatGram, "g", FatColor)
 
         HorizontalDivider(color = Color(0xFFE6EBE2))
 
@@ -276,11 +291,26 @@ private fun NutritionPanel(
                 .fillMaxWidth()
                 .background(TonalSurface, RoundedCornerShape(8.dp))
                 .padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            HealthMetric("Fiber", "${fiberGram}g", FiberColor)
-            HealthMetric("Sugar", "${sugarGram}g", SugarColor)
-            HealthMetric("Sodium", "${sodiumMilligram}mg", SodiumColor)
+            HealthMetric(
+                label = "Fiber",
+                value = "${fiberGram}g / ${targetFiberGram}g",
+                color = FiberColor,
+                modifier = Modifier.weight(1f)
+            )
+            HealthMetric(
+                label = "Sugar",
+                value = "${sugarGram}g / ${targetSugarGram}g",
+                color = SugarColor,
+                modifier = Modifier.weight(1f)
+            )
+            HealthMetric(
+                label = "Sodium",
+                value = "${sodiumMilligram}mg / ${targetSodiumMilligram}mg",
+                color = SodiumColor,
+                modifier = Modifier.weight(1f)
+            )
         }
     }
 }
@@ -391,9 +421,13 @@ private fun RoundedProgressBar(
 private fun HealthMetric(
     label: String,
     value: String,
-    color: Color
+    color: Color,
+    modifier: Modifier = Modifier
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(5.dp)
+    ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically
