@@ -1,5 +1,6 @@
 package com.jaewonlee.aidietrecord.ui.screen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,11 +24,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealFoodRecord
 import com.jaewonlee.aidietrecord.data.model.MealRecord
+import com.jaewonlee.aidietrecord.ui.theme.AppOutline
+import com.jaewonlee.aidietrecord.ui.theme.AppSuccess
+import com.jaewonlee.aidietrecord.ui.theme.AppSurface
+import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.util.UriImage
 import com.jaewonlee.aidietrecord.ui.util.formatMealDateTime
 
@@ -53,7 +57,9 @@ fun MealDetailScreen(
         ) {
             if (mealRecord == null) {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = AppSurface),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                    border = BorderStroke(1.dp, AppOutline),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -80,7 +86,9 @@ fun MealDetailScreen(
             )
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(1.dp, AppOutline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -96,7 +104,7 @@ fun MealDetailScreen(
                     Text(
                         text = "Logged at: ${formatMealDateTime(mealRecord.createdAt)}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF52624F)
+                        color = AppTextMuted
                     )
                     Text("${mealRecord.calories} kcal", style = MaterialTheme.typography.titleMedium)
                     Text(
@@ -125,7 +133,9 @@ fun MealDetailScreen(
             }
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(1.dp, AppOutline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -145,7 +155,9 @@ fun MealDetailScreen(
             }
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(1.dp, AppOutline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -168,7 +180,9 @@ fun MealDetailScreen(
             }
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(1.dp, AppOutline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -234,18 +248,18 @@ private fun MealFoodInfoRow(food: MealFoodRecord) {
             Text(
                 text = "${food.calories} kcal",
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF2D6A4F)
+                color = AppSuccess
             )
         }
         Text(
             text = "Carbs ${food.carbsGram}g · Protein ${food.proteinGram}g · Fat ${food.fatGram}g",
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF52624F)
+            color = AppTextMuted
         )
         Text(
             text = "Fiber ${food.fiberGram}g · Sugar ${food.sugarGram}g · Sodium ${food.sodiumMilligram}mg",
             style = MaterialTheme.typography.bodySmall,
-            color = Color(0xFF52624F)
+            color = AppTextMuted
         )
     }
 }
@@ -264,7 +278,7 @@ private fun NutritionInfoRow(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF2D6A4F)
+            color = AppSuccess
         )
     }
 }

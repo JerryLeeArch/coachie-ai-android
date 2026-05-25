@@ -1,6 +1,7 @@
 package com.jaewonlee.aidietrecord.ui.screen
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,8 +19,13 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Modifier
@@ -34,11 +40,23 @@ import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.BodyMeasurementEntity
 import com.jaewonlee.aidietrecord.data.model.GoalPlanEntity
 import com.jaewonlee.aidietrecord.data.model.MealRecord
+import com.jaewonlee.aidietrecord.ui.theme.AppOutline
+import com.jaewonlee.aidietrecord.ui.theme.AppPrimary
+import com.jaewonlee.aidietrecord.ui.theme.AppSuccess
+import com.jaewonlee.aidietrecord.ui.theme.AppSurface
+import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceSoft
+import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
+import com.jaewonlee.aidietrecord.ui.theme.AppTextPrimary
+import com.jaewonlee.aidietrecord.ui.theme.MacroCarb
+import com.jaewonlee.aidietrecord.ui.theme.MacroFat
+import com.jaewonlee.aidietrecord.ui.theme.MacroProtein
 import com.jaewonlee.aidietrecord.ui.util.formatMealDate
 import com.jaewonlee.aidietrecord.ui.util.mealRecordDate
 import java.time.LocalDate
 import kotlin.math.abs
 import kotlin.math.max
+
+private const val CollapsedBodyMeasurementCount = 3
 
 @Composable
 fun RecentStatsScreen(
@@ -79,8 +97,9 @@ fun RecentStatsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(1.dp, AppOutline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -101,13 +120,15 @@ fun RecentStatsScreen(
                     Text(
                         text = buildTrendText(latestStats, previousStats),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFF2D6A4F)
+                        color = AppSuccess
                     )
                 }
             }
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(1.dp, AppOutline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -129,7 +150,9 @@ fun RecentStatsScreen(
             }
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(1.dp, AppOutline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -153,7 +176,9 @@ fun RecentStatsScreen(
             }
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color.White),
+                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(1.dp, AppOutline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -181,10 +206,10 @@ private fun StatsChip(
 ) {
     Column(
         modifier = modifier
-            .background(Color(0xFFEFF6EE), RoundedCornerShape(8.dp))
+            .background(AppSurfaceSoft, RoundedCornerShape(8.dp))
             .padding(horizontal = 10.dp, vertical = 9.dp)
     ) {
-        Text(label, style = MaterialTheme.typography.labelMedium, color = Color(0xFF52624F))
+        Text(label, style = MaterialTheme.typography.labelMedium, color = AppTextMuted)
         Spacer(modifier = Modifier.height(4.dp))
         Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
     }
@@ -227,9 +252,9 @@ private fun CalorieTrendChart(
             val bottomPadding = 20.dp.toPx()
             val chartWidth = size.width - leftPadding - rightPadding
             val chartHeight = size.height - topPadding - bottomPadding
-            val gridColor = Color(0xFFE2E8DF)
-            val targetColor = Color(0xFF9AA39A)
-            val calorieColor = Color(0xFF5269A6)
+            val gridColor = AppOutline
+            val targetColor = AppTextMuted
+            val calorieColor = AppPrimary
 
             fun x(index: Int): Float {
                 return if (points.size == 1) {
@@ -280,8 +305,8 @@ private fun CalorieTrendChart(
         )
         ChartLegend(
             items = listOf(
-                ChartLegendItem("Intake", Color(0xFF5269A6)),
-                ChartLegendItem("Goal", Color(0xFF9AA39A))
+                ChartLegendItem("Intake", AppPrimary),
+                ChartLegendItem("Goal", AppTextMuted)
             )
         )
     }
@@ -334,11 +359,11 @@ private fun NutritionTrendChart(
             val bottomPadding = 20.dp.toPx()
             val chartWidth = size.width - leftPadding - rightPadding
             val chartHeight = size.height - topPadding - bottomPadding
-            val gridColor = Color(0xFFE2E8DF)
-            val targetColor = Color(0xFF9AA39A)
-            val carbColor = Color(0xFF3F7FC2)
-            val proteinColor = Color(0xFF2D6A4F)
-            val fatColor = Color(0xFFD18B2F)
+            val gridColor = AppOutline
+            val targetColor = AppTextMuted
+            val carbColor = MacroCarb
+            val proteinColor = MacroProtein
+            val fatColor = MacroFat
 
             fun x(index: Int): Float {
                 return if (points.size == 1) {
@@ -399,14 +424,14 @@ private fun NutritionTrendChart(
         Text(
             text = "Latest: C ${latestPoint.carbsGram}/${latestPoint.targetCarbsGram}g · P ${latestPoint.proteinGram}/${latestPoint.targetProteinGram}g · F ${latestPoint.fatGram}/${latestPoint.targetFatGram}g",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF52624F)
+            color = AppTextMuted
         )
         ChartLegend(
             items = listOf(
-                ChartLegendItem("Carbs", Color(0xFF3F7FC2)),
-                ChartLegendItem("Protein", Color(0xFF2D6A4F)),
-                ChartLegendItem("Fat", Color(0xFFD18B2F)),
-                ChartLegendItem("Goal", Color(0xFF9AA39A))
+                ChartLegendItem("Carbs", MacroCarb),
+                ChartLegendItem("Protein", MacroProtein),
+                ChartLegendItem("Fat", MacroFat),
+                ChartLegendItem("Goal", AppTextMuted)
             )
         )
     }
@@ -421,6 +446,16 @@ private fun BodyProgressPanel(measurements: List<BodyMeasurementEntity>) {
 
     val chronologicalMeasurements = measurements.asReversed()
     val latestMeasurement = measurements.first()
+    var showAllMeasurements by rememberSaveable(measurements.size) {
+        mutableStateOf(false)
+    }
+    val displayedMeasurements = if (showAllMeasurements) {
+        measurements
+    } else {
+        measurements.take(CollapsedBodyMeasurementCount)
+    }
+    val hiddenMeasurementCount = (measurements.size - CollapsedBodyMeasurementCount)
+        .coerceAtLeast(0)
 
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -444,8 +479,22 @@ private fun BodyProgressPanel(measurements: List<BodyMeasurementEntity>) {
         BodyMeasurementTrendChart(measurements = chronologicalMeasurements)
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            measurements.forEach { measurement ->
+            displayedMeasurements.forEach { measurement ->
                 BodyMeasurementRow(measurement = measurement)
+            }
+            if (hiddenMeasurementCount > 0) {
+                TextButton(
+                    onClick = { showAllMeasurements = !showAllMeasurements },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (showAllMeasurements) {
+                            "Show less"
+                        } else {
+                            "Show all ${measurements.size} records"
+                        }
+                    )
+                }
             }
         }
     }
@@ -464,21 +513,21 @@ private fun BodyMeasurementTrendChart(measurements: List<BodyMeasurementEntity>)
     val series = listOf(
         BodyChartSeries(
             label = "Weight",
-            color = Color(0xFF5269A6),
+            color = AppPrimary,
             values = points.mapIndexedNotNull { index, point ->
                 point.weightKg?.let { BodyChartValue(index = index, value = it) }
             }
         ),
         BodyChartSeries(
             label = "Muscle",
-            color = Color(0xFF2D6A4F),
+            color = AppSuccess,
             values = points.mapIndexedNotNull { index, point ->
                 point.muscleMassKg?.let { BodyChartValue(index = index, value = it) }
             }
         ),
         BodyChartSeries(
             label = "Body Fat",
-            color = Color(0xFFD18B2F),
+            color = MacroFat,
             values = points.mapIndexedNotNull { index, point ->
                 point.bodyFatPercent?.let { BodyChartValue(index = index, value = it) }
             }
@@ -502,7 +551,7 @@ private fun BodyMeasurementTrendChart(measurements: List<BodyMeasurementEntity>)
             val bottomPadding = 20.dp.toPx()
             val chartWidth = size.width - leftPadding - rightPadding
             val chartHeight = size.height - topPadding - bottomPadding
-            val gridColor = Color(0xFFE2E8DF)
+            val gridColor = AppOutline
 
             fun x(index: Int): Float {
                 return if (points.size == 1) {
@@ -558,7 +607,7 @@ private fun BodyMeasurementRow(measurement: BodyMeasurementEntity) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFFEFF6EE), RoundedCornerShape(8.dp))
+            .background(AppSurfaceSoft, RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -566,12 +615,12 @@ private fun BodyMeasurementRow(measurement: BodyMeasurementEntity) {
             text = formatMealDate(measuredDate),
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF191C20)
+            color = AppTextPrimary
         )
         Text(
             text = measurement.bodyMeasurementValuesText(),
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF52624F)
+            color = AppTextMuted
         )
     }
 }
@@ -581,7 +630,7 @@ private fun EmptyChartText(message: String) {
     Text(
         text = message,
         style = MaterialTheme.typography.bodyMedium,
-        color = Color(0xFF52624F)
+        color = AppTextMuted
     )
 }
 
@@ -597,12 +646,12 @@ private fun ChartDateLabels(
         Text(
             text = formatMealDate(startDate),
             style = MaterialTheme.typography.labelMedium,
-            color = Color(0xFF52624F)
+            color = AppTextMuted
         )
         Text(
             text = formatMealDate(endDate),
             style = MaterialTheme.typography.labelMedium,
-            color = Color(0xFF52624F)
+            color = AppTextMuted
         )
     }
 }
@@ -633,7 +682,7 @@ private fun ChartLegend(items: List<ChartLegendItem>) {
                         Text(
                             text = item.label,
                             style = MaterialTheme.typography.labelMedium,
-                            color = Color(0xFF52624F)
+                            color = AppTextMuted
                         )
                     }
                 }

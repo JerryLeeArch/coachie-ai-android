@@ -1,5 +1,6 @@
 package com.jaewonlee.aidietrecord.ui.screen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,10 +24,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealRecord
+import com.jaewonlee.aidietrecord.ui.theme.AppOutline
+import com.jaewonlee.aidietrecord.ui.theme.AppSurface
+import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.util.UriImage
 import com.jaewonlee.aidietrecord.ui.util.formatMealDateTime
 import com.jaewonlee.aidietrecord.ui.util.isTodayMeal
@@ -138,7 +141,9 @@ private fun EmptyMealRecordMessage(selectedFilter: MealRecordFilter) {
     }
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, AppOutline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -157,8 +162,9 @@ private fun MealListItem(
     onClick: () -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, AppOutline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -186,18 +192,18 @@ private fun MealListItem(
                 Text(
                     text = formatMealDateTime(mealRecord.createdAt),
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color(0xFF52624F)
+                    color = AppTextMuted
                 )
                 Text("${mealRecord.calories} kcal", style = MaterialTheme.typography.bodyMedium)
                 Text(
                     text = "Carbs ${mealRecord.carbsGram}g | Protein ${mealRecord.proteinGram}g | Fat ${mealRecord.fatGram}g",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF52624F)
+                    color = AppTextMuted
                 )
                 Text(
                     text = "Fiber ${mealRecord.fiberGram}g | Sugar ${mealRecord.sugarGram}g | Sodium ${mealRecord.sodiumMilligram}mg",
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF52624F)
+                    color = AppTextMuted
                 )
                 Text(
                     text = mealRecord.memo,

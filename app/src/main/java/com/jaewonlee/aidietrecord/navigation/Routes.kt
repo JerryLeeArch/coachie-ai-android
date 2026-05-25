@@ -5,6 +5,7 @@ sealed class Route(val path: String) {
     data object Home : Route("home")
     data object AddMeal : Route("addMeal")
     data object MealList : Route("mealList")
+    data object MealReview : Route("mealReview")
     data object Profile : Route("profile")
     data object GoalSettings : Route("goalSettings")
     data object RecentStats : Route("recentStats")

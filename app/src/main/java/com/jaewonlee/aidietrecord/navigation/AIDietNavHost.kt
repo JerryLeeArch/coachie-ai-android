@@ -19,6 +19,8 @@ import com.jaewonlee.aidietrecord.data.ai.GeminiMealAnalyzer
 import com.jaewonlee.aidietrecord.data.local.AuthSessionStore
 import com.jaewonlee.aidietrecord.data.local.MealDatabase
 import com.jaewonlee.aidietrecord.data.model.GoalPlanEntity
+import com.jaewonlee.aidietrecord.data.model.MealRecord
+import com.jaewonlee.aidietrecord.data.model.MealUploadDraft
 import com.jaewonlee.aidietrecord.data.model.UserAccount
 import com.jaewonlee.aidietrecord.data.repository.AuthRepository
 import com.jaewonlee.aidietrecord.data.repository.GoalRepository
@@ -28,8 +30,10 @@ import com.jaewonlee.aidietrecord.ui.screen.AddMealScreen
 import com.jaewonlee.aidietrecord.ui.screen.GoalSettingsScreen
 import com.jaewonlee.aidietrecord.ui.screen.HomeScreen
 import com.jaewonlee.aidietrecord.ui.screen.LoginScreen
+import com.jaewonlee.aidietrecord.ui.screen.MealAnalysisNoticeUiState
 import com.jaewonlee.aidietrecord.ui.screen.MealDetailScreen
 import com.jaewonlee.aidietrecord.ui.screen.MealListScreen
+import com.jaewonlee.aidietrecord.ui.screen.MealReviewScreen
 import com.jaewonlee.aidietrecord.ui.screen.ProfileScreen
 import com.jaewonlee.aidietrecord.ui.screen.RecentStatsScreen
 import java.time.LocalDate
@@ -138,6 +142,7 @@ fun AIDietNavHost() {
     var targetSodiumMilligram by rememberSaveable { mutableStateOf("2300") }
     var manualTargetsEnabled by rememberSaveable { mutableStateOf(false) }
     var mealSaveInProgress by rememberSaveable { mutableStateOf(false) }
+    var pendingMealReview by remember { mutableStateOf<PendingMealReviewState?>(null) }
     var authRestoreCompleted by rememberSaveable {
         mutableStateOf(authSessionStore.getSavedUserId() <= 0L)
     }
@@ -199,6 +204,50 @@ fun AIDietNavHost() {
         return
     }
 
+    fun navigateHome() {
+        navController.navigate(Route.Home.path) {
+            popUpTo(Route.Home.path) { inclusive = false }
+            launchSingleTop = true
+        }
+    }
+
+    val startMealAnalysis: (MealUploadDraft) -> Unit = { mealUploadDraft ->
+        if (!mealSaveInProgress && currentUserId > 0) {
+            val draft = mealUploadDraft.copy(ownerId = currentUserId)
+            mealSaveInProgress = true
+            pendingMealReview = PendingMealReviewState(
+                draft = draft,
+                isAnalyzing = true,
+                reviewedMeal = null,
+                errorMessage = null
+            )
+            navigateHome()
+            coroutineScope.launch {
+                try {
+                    val reviewedMeal = mealReviewRepository.reviewMealDraft(draft)
+                    pendingMealReview = pendingMealReview
+                        ?.takeIf { it.draft.createdAt == draft.createdAt }
+                        ?.copy(
+                            isAnalyzing = false,
+                            reviewedMeal = reviewedMeal,
+                            errorMessage = null
+                        )
+                } catch (throwable: Throwable) {
+                    pendingMealReview = pendingMealReview
+                        ?.takeIf { it.draft.createdAt == draft.createdAt }
+                        ?.copy(
+                            isAnalyzing = false,
+                            reviewedMeal = null,
+                            errorMessage = throwable.message
+                                ?: "AI could not analyze this meal. Try again with clearer notes."
+                        )
+                } finally {
+                    mealSaveInProgress = false
+                }
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = if (currentUserId > 0L) Route.Home.path else Route.Login.path
@@ -257,6 +306,13 @@ fun AIDietNavHost() {
             HomeScreen(
                 nickname = nickname,
                 mealRecords = mealRecords,
+                mealAnalysisNotice = pendingMealReview?.let { pendingReview ->
+                    MealAnalysisNoticeUiState(
+                        isAnalyzing = pendingReview.isAnalyzing,
+                        reviewedMeal = pendingReview.reviewedMeal,
+                        errorMessage = pendingReview.errorMessage
+                    )
+                },
                 targetCalories = activeGoalPlan?.dailyCalories
                     ?: targetCalories.toPositiveIntOrDefault(2000),
                 targetCarbsGram = activeGoalPlan?.dailyCarbsGram
@@ -275,7 +331,15 @@ fun AIDietNavHost() {
                 onMealListClick = { navController.navigate(Route.MealList.path) },
                 onGoalSettingsClick = { navController.navigate(Route.GoalSettings.path) },
                 onRecentStatsClick = { navController.navigate(Route.RecentStats.path) },
-                onProfileClick = { navController.navigate(Route.Profile.path) }
+                onProfileClick = { navController.navigate(Route.Profile.path) },
+                onReviewMealClick = { navController.navigate(Route.MealReview.path) },
+                onRetryMealAnalysisClick = {
+                    pendingMealReview?.draft?.let(startMealAnalysis)
+                },
+                onDismissMealAnalysisClick = {
+                    pendingMealReview = null
+                    mealSaveInProgress = false
+                }
             )
         }
 
@@ -285,23 +349,33 @@ fun AIDietNavHost() {
                 isSaving = mealSaveInProgress,
                 onBackClick = { navController.navigateUp() },
                 onSaveClick = { mealUploadDraft ->
-                    if (!mealSaveInProgress) {
-                        mealSaveInProgress = true
-                        coroutineScope.launch {
-                            try {
-                                val reviewedMeal = mealReviewRepository.reviewMealDraft(
-                                    mealUploadDraft.copy(ownerId = currentUserId)
-                                )
-                                mealRepository.addMealRecord(reviewedMeal)
-                                navController.navigate(Route.MealList.path) {
-                                    popUpTo(Route.Home.path)
-                                }
-                            } finally {
-                                mealSaveInProgress = false
-                            }
-                        }
-                    }
+                    startMealAnalysis(mealUploadDraft)
                 }
+            )
+        }
+
+        composable(Route.MealReview.path) {
+            val pendingReview = pendingMealReview
+            MealReviewScreen(
+                reviewedMeal = pendingReview?.reviewedMeal,
+                isAnalyzing = pendingReview?.isAnalyzing == true,
+                errorMessage = pendingReview?.errorMessage,
+                onConfirmClick = { reviewedMeal ->
+                    coroutineScope.launch {
+                        mealRepository.addMealRecord(reviewedMeal)
+                        pendingMealReview = null
+                        navigateHome()
+                    }
+                },
+                onRetryClick = {
+                    pendingMealReview?.draft?.let(startMealAnalysis)
+                },
+                onDiscardClick = {
+                    pendingMealReview = null
+                    mealSaveInProgress = false
+                    navigateHome()
+                },
+                onBackClick = { navController.navigateUp() }
             )
         }
 
@@ -510,6 +584,13 @@ fun AIDietNavHost() {
         }
     }
 }
+
+private data class PendingMealReviewState(
+    val draft: MealUploadDraft,
+    val isAnalyzing: Boolean,
+    val reviewedMeal: MealRecord?,
+    val errorMessage: String?
+)
 
 private fun String.toPositiveIntOrDefault(defaultValue: Int): Int {
     return toIntOrNull()?.takeIf { it > 0 } ?: defaultValue

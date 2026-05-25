@@ -3,7 +3,7 @@ package com.jaewonlee.aidietrecord.ui.screen
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -40,6 +39,9 @@ import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealFoodDraft
 import com.jaewonlee.aidietrecord.data.model.MealRecord
 import com.jaewonlee.aidietrecord.data.model.MealUploadDraft
+import com.jaewonlee.aidietrecord.ui.theme.AppOutline
+import com.jaewonlee.aidietrecord.ui.theme.AppSurface
+import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.util.UriImage
 
 @Composable
@@ -59,6 +61,15 @@ fun AddMealScreen(
         mutableStateOf((foodDrafts.maxOfOrNull { it.id } ?: 0L) + 1L)
     }
     var errorMessage by remember(initialMeal?.id) { mutableStateOf<String?>(null) }
+
+    if (!isEditMode) {
+        SingleMealCaptureScreen(
+            isSaving = isSaving,
+            onBackClick = onBackClick,
+            onSaveClick = onSaveClick
+        )
+        return
+    }
 
     fun updateDraft(
         draftId: Long,
@@ -197,6 +208,136 @@ fun AddMealScreen(
 }
 
 @Composable
+private fun SingleMealCaptureScreen(
+    isSaving: Boolean,
+    onBackClick: () -> Unit,
+    onSaveClick: (MealUploadDraft) -> Unit
+) {
+    val context = LocalContext.current
+    var mealImageUri by remember { mutableStateOf<String?>(null) }
+    var mealNotes by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { selectedUri ->
+        if (selectedUri != null) {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    selectedUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+            mealImageUri = selectedUri.toString()
+            errorMessage = null
+        }
+    }
+
+    ScreenScaffold(
+        title = "Add Meal",
+        onBackClick = onBackClick
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            SectionHeader(
+                title = "Meal Input",
+                trailingText = "AI split"
+            )
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+                border = BorderStroke(1.dp, AppOutline),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    mealImageUri?.let { imageUri ->
+                        UriImage(
+                            imageUri = imageUri,
+                            placeholderText = "Unable to load meal photo",
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(190.dp)
+                        )
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { imagePicker.launch(arrayOf("image/*")) }) {
+                            Text(if (mealImageUri == null) "Add Photo" else "Change Photo")
+                        }
+                        if (mealImageUri != null) {
+                            TextButton(onClick = { mealImageUri = null }) {
+                                Text("Remove Photo")
+                            }
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = mealNotes,
+                        onValueChange = {
+                            mealNotes = it
+                            errorMessage = null
+                        },
+                        label = { Text("Meal Description") },
+                        placeholder = {
+                            Text(
+                                "e.g. Kimchi stew, half bowl of rice, egg roll, and a little spicy pork"
+                            )
+                        },
+                        minLines = 7,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            errorMessage?.let { message ->
+                Text(
+                    text = message,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Button(
+                onClick = {
+                    val trimmedNotes = mealNotes.trim()
+                    if (trimmedNotes.isBlank() && mealImageUri == null) {
+                        errorMessage = "Add a photo or describe the meal."
+                    } else {
+                        onSaveClick(
+                            MealUploadDraft(
+                                memo = trimmedNotes,
+                                imageUri = mealImageUri,
+                                createdAt = System.currentTimeMillis(),
+                                foods = listOf(
+                                    MealFoodDraft(
+                                        foodName = "",
+                                        description = trimmedNotes,
+                                        imageUri = mealImageUri
+                                    )
+                                )
+                            )
+                        )
+                    }
+                },
+                enabled = !isSaving,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (isSaving) "Analyzing..." else "Analyze Meal")
+            }
+        }
+    }
+}
+
+@Composable
 private fun SectionHeader(
     title: String,
     trailingText: String
@@ -214,7 +355,7 @@ private fun SectionHeader(
         Text(
             text = trailingText,
             style = MaterialTheme.typography.labelLarge,
-            color = Color(0xFF52624F)
+            color = AppTextMuted
         )
     }
 }
@@ -253,8 +394,9 @@ private fun FoodDraftCard(
     }
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, AppOutline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {

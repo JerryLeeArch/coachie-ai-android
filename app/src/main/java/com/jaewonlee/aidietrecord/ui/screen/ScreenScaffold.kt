@@ -10,7 +10,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
+import com.jaewonlee.aidietrecord.ui.theme.AppBackground
+import com.jaewonlee.aidietrecord.ui.theme.AppSurface
+import com.jaewonlee.aidietrecord.ui.theme.AppTextPrimary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,13 +35,13 @@ fun ScreenScaffold(
                 },
                 actions = actions,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface
+                    containerColor = AppSurface,
+                    titleContentColor = AppTextPrimary,
+                    navigationIconContentColor = AppTextPrimary
                 )
             )
         },
-        containerColor = Color(0xFFF8FAF7),
+        containerColor = AppBackground,
         content = content
     )
 }

@@ -1,6 +1,8 @@
 package com.jaewonlee.aidietrecord.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,9 +20,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,29 +39,52 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealRecord
+import com.jaewonlee.aidietrecord.ui.theme.AppBackground
+import com.jaewonlee.aidietrecord.ui.theme.AppDangerSoft
+import com.jaewonlee.aidietrecord.ui.theme.AppOutline
+import com.jaewonlee.aidietrecord.ui.theme.AppPrimary
+import com.jaewonlee.aidietrecord.ui.theme.AppPrimarySoft
+import com.jaewonlee.aidietrecord.ui.theme.AppSuccessSoft
+import com.jaewonlee.aidietrecord.ui.theme.AppSurface
+import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceTonal
+import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
+import com.jaewonlee.aidietrecord.ui.theme.AppTextPrimary
+import com.jaewonlee.aidietrecord.ui.theme.MacroCarb
+import com.jaewonlee.aidietrecord.ui.theme.MacroFat
+import com.jaewonlee.aidietrecord.ui.theme.MacroFiber
+import com.jaewonlee.aidietrecord.ui.theme.MacroProtein
+import com.jaewonlee.aidietrecord.ui.theme.MacroSodium
+import com.jaewonlee.aidietrecord.ui.theme.MacroSugar
 import com.jaewonlee.aidietrecord.ui.util.isTodayMeal
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val HomeBackground = Color(0xFFF6F8F3)
-private val CardSurface = Color(0xFFFEFFFC)
-private val TonalSurface = Color(0xFFEAF1E6)
-private val TrackColor = Color(0xFFE1E7DE)
-private val TextPrimary = Color(0xFF191C20)
-private val TextMuted = Color(0xFF657064)
-private val PrimaryAction = Color(0xFF5269A6)
-private val CarbColor = Color(0xFF3F7FC2)
-private val ProteinColor = Color(0xFF2E7253)
-private val FatColor = Color(0xFFD18B2F)
-private val FiberColor = Color(0xFF4B8F87)
-private val SugarColor = Color(0xFFC86F86)
-private val SodiumColor = Color(0xFF697386)
+private val HomeBackground = AppBackground
+private val CardSurface = AppSurface
+private val TonalSurface = AppSurfaceTonal
+private val TrackColor = AppOutline
+private val TextPrimary = AppTextPrimary
+private val TextMuted = AppTextMuted
+private val PrimaryAction = AppPrimary
+private val CarbColor = MacroCarb
+private val ProteinColor = MacroProtein
+private val FatColor = MacroFat
+private val FiberColor = MacroFiber
+private val SugarColor = MacroSugar
+private val SodiumColor = MacroSodium
+
+data class MealAnalysisNoticeUiState(
+    val isAnalyzing: Boolean,
+    val reviewedMeal: MealRecord?,
+    val errorMessage: String?
+)
 
 @Composable
 fun HomeScreen(
     nickname: String,
     mealRecords: List<MealRecord>,
+    mealAnalysisNotice: MealAnalysisNoticeUiState?,
     targetCalories: Int,
     targetCarbsGram: Int,
     targetProteinGram: Int,
@@ -67,7 +96,10 @@ fun HomeScreen(
     onMealListClick: () -> Unit,
     onGoalSettingsClick: () -> Unit,
     onRecentStatsClick: () -> Unit,
-    onProfileClick: () -> Unit
+    onProfileClick: () -> Unit,
+    onReviewMealClick: () -> Unit,
+    onRetryMealAnalysisClick: () -> Unit,
+    onDismissMealAnalysisClick: () -> Unit
 ) {
     val todayMeals = mealRecords.filter { isTodayMeal(it.createdAt) }
     val totalCalories = todayMeals.sumOf { it.calories }
@@ -107,6 +139,15 @@ fun HomeScreen(
                 onProfileClick = onProfileClick
             )
 
+            mealAnalysisNotice?.let { notice ->
+                MealAnalysisNoticeCard(
+                    notice = notice,
+                    onReviewMealClick = onReviewMealClick,
+                    onRetryMealAnalysisClick = onRetryMealAnalysisClick,
+                    onDismissMealAnalysisClick = onDismissMealAnalysisClick
+                )
+            }
+
             CalorieHero(
                 totalCalories = totalCalories,
                 targetCalories = dailyCalories,
@@ -131,6 +172,107 @@ fun HomeScreen(
             )
 
             Spacer(modifier = Modifier.height(4.dp))
+        }
+    }
+}
+
+@Composable
+private fun MealAnalysisNoticeCard(
+    notice: MealAnalysisNoticeUiState,
+    onReviewMealClick: () -> Unit,
+    onRetryMealAnalysisClick: () -> Unit,
+    onDismissMealAnalysisClick: () -> Unit
+) {
+    val noticeContainerColor = when {
+        notice.isAnalyzing -> AppPrimarySoft
+        notice.errorMessage != null -> AppDangerSoft
+        else -> AppSuccessSoft
+    }
+
+    Card(
+        colors = CardDefaults.cardColors(containerColor = noticeContainerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, AppOutline),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            when {
+                notice.isAnalyzing -> {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text(
+                                text = "AI is analyzing your meal",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "It will appear here for review before it affects today's totals.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = TextMuted
+                            )
+                        }
+                    }
+                }
+                notice.errorMessage != null -> {
+                    Text(
+                        text = "Meal analysis failed",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = notice.errorMessage,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = onDismissMealAnalysisClick,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Dismiss")
+                        }
+                        Button(
+                            onClick = onRetryMealAnalysisClick,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Retry")
+                        }
+                    }
+                }
+                notice.reviewedMeal != null -> {
+                    val reviewedMeal = notice.reviewedMeal
+                    Text(
+                        text = "Meal analysis ready",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "${reviewedMeal.foods.size} food item(s) detected · ${reviewedMeal.calories} kcal estimated",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextMuted
+                    )
+                    Button(
+                        onClick = onReviewMealClick,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Review Result")
+                    }
+                }
+            }
         }
     }
 }
@@ -174,10 +316,12 @@ private fun CalorieHero(
     progress: Float,
     onMealListClick: () -> Unit
 ) {
+    val cardShape = RoundedCornerShape(8.dp)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(CardSurface, RoundedCornerShape(8.dp))
+            .background(CardSurface, cardShape)
+            .border(1.dp, AppOutline, cardShape)
             .padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
@@ -260,10 +404,12 @@ private fun NutritionPanel(
     targetSugarGram: Int,
     targetSodiumMilligram: Int
 ) {
+    val cardShape = RoundedCornerShape(8.dp)
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(CardSurface, RoundedCornerShape(8.dp))
+            .background(CardSurface, cardShape)
+            .border(1.dp, AppOutline, cardShape)
             .padding(22.dp),
         verticalArrangement = Arrangement.spacedBy(15.dp)
     ) {
@@ -284,7 +430,7 @@ private fun NutritionPanel(
         NutritionTargetRow("Protein", proteinGram, targetProteinGram, "g", ProteinColor)
         NutritionTargetRow("Fat", fatGram, targetFatGram, "g", FatColor)
 
-        HorizontalDivider(color = Color(0xFFE6EBE2))
+        HorizontalDivider(color = AppOutline)
 
         Row(
             modifier = Modifier
