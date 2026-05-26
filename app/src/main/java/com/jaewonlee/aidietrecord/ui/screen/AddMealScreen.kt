@@ -259,15 +259,17 @@ private fun SingleMealCaptureScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    mealImageUri?.let { imageUri ->
-                        UriImage(
-                            imageUri = imageUri,
-                            placeholderText = "Unable to load meal photo",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(190.dp)
-                        )
-                    }
+                    UriImage(
+                        imageUri = mealImageUri,
+                        placeholderText = if (mealImageUri == null) {
+                            "Photo optional"
+                        } else {
+                            "Unable to load meal photo"
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(148.dp)
+                    )
 
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { imagePicker.launch(arrayOf("image/*")) }) {
@@ -292,7 +294,7 @@ private fun SingleMealCaptureScreen(
                                 "e.g. Kimchi stew, half bowl of rice, egg roll, and a little spicy pork"
                             )
                         },
-                        minLines = 7,
+                        minLines = 5,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

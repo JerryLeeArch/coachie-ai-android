@@ -3,6 +3,7 @@ package com.jaewonlee.aidietrecord.ui.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,20 +36,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.jaewonlee.aidietrecord.ui.theme.AppDanger
 import com.jaewonlee.aidietrecord.data.model.MealRecord
 import com.jaewonlee.aidietrecord.ui.theme.AppBackground
 import com.jaewonlee.aidietrecord.ui.theme.AppDangerSoft
 import com.jaewonlee.aidietrecord.ui.theme.AppOutline
 import com.jaewonlee.aidietrecord.ui.theme.AppPrimary
 import com.jaewonlee.aidietrecord.ui.theme.AppPrimarySoft
+import com.jaewonlee.aidietrecord.ui.theme.AppSuccess
 import com.jaewonlee.aidietrecord.ui.theme.AppSuccessSoft
 import com.jaewonlee.aidietrecord.ui.theme.AppSurface
+import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceSoft
 import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceTonal
 import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.theme.AppTextPrimary
+import com.jaewonlee.aidietrecord.ui.theme.AppWarning
+import com.jaewonlee.aidietrecord.ui.theme.AppWarningSoft
 import com.jaewonlee.aidietrecord.ui.theme.MacroCarb
 import com.jaewonlee.aidietrecord.ui.theme.MacroFat
 import com.jaewonlee.aidietrecord.ui.theme.MacroFiber
@@ -110,7 +119,7 @@ fun HomeScreen(
     val totalSugar = todayMeals.sumOf { it.sugarGram }
     val totalSodium = todayMeals.sumOf { it.sodiumMilligram }
     val dailyCalories = targetCalories.coerceAtLeast(1)
-    val remainingCalories = (dailyCalories - totalCalories).coerceAtLeast(0)
+    val calorieDelta = dailyCalories - totalCalories
     val calorieProgress = (totalCalories / dailyCalories.toFloat()).coerceIn(0f, 1f)
     val todayLabel = LocalDate.now()
         .format(DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.ENGLISH))
@@ -151,7 +160,7 @@ fun HomeScreen(
             CalorieHero(
                 totalCalories = totalCalories,
                 targetCalories = dailyCalories,
-                remainingCalories = remainingCalories,
+                calorieDelta = calorieDelta,
                 progress = calorieProgress,
                 onMealListClick = onMealListClick
             )
@@ -312,18 +321,26 @@ private fun HomeHeader(
 private fun CalorieHero(
     totalCalories: Int,
     targetCalories: Int,
-    remainingCalories: Int,
+    calorieDelta: Int,
     progress: Float,
     onMealListClick: () -> Unit
 ) {
     val cardShape = RoundedCornerShape(8.dp)
+    val isOverGoal = calorieDelta < 0
+    val statusText = if (isOverGoal) {
+        "Over goal by ${-calorieDelta} kcal"
+    } else {
+        "$calorieDelta kcal left"
+    }
+    val statusColor = if (isOverGoal) AppDanger else AppSuccess
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(CardSurface, cardShape)
             .border(1.dp, AppOutline, cardShape)
-            .padding(22.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -345,45 +362,110 @@ private fun CalorieHero(
             }
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                Text(
-                    text = totalCalories.toString(),
-                    style = MaterialTheme.typography.displayLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
-                Text(
-                    text = " kcal",
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary,
-                    modifier = Modifier.padding(bottom = 10.dp)
-                )
-            }
-        }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(18.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CalorieGauge(
+                totalCalories = totalCalories,
+                targetCalories = targetCalories,
+                progress = progress,
+                overRatio = ((totalCalories - targetCalories).coerceAtLeast(0) / targetCalories.toFloat())
+            )
 
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
-                    text = "$remainingCalories kcal left",
+                    text = statusText,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = statusColor
+                )
+                Text(
+                    text = "$targetCalories kcal daily goal",
                     style = MaterialTheme.typography.bodyMedium,
                     color = TextMuted
                 )
-                Text(
-                    text = "$targetCalories kcal goal",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
+                StatusPill(
+                    text = if (isOverGoal) "Over target" else "On pace",
+                    color = statusColor,
+                    containerColor = if (isOverGoal) AppDangerSoft else AppSuccessSoft
                 )
             }
-            RoundedProgressBar(
-                progress = progress,
+        }
+    }
+}
+
+@Composable
+private fun CalorieGauge(
+    totalCalories: Int,
+    targetCalories: Int,
+    progress: Float,
+    overRatio: Float
+) {
+    Box(
+        modifier = Modifier.size(168.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokeWidth = 13.dp.toPx()
+            val arcSize = size.minDimension - strokeWidth
+            val topLeft = Offset(
+                x = (size.width - arcSize) / 2f,
+                y = (size.height - arcSize) / 2f
+            )
+            val arcStroke = Stroke(
+                width = strokeWidth,
+                cap = StrokeCap.Round
+            )
+
+            drawArc(
+                color = TrackColor,
+                startAngle = -90f,
+                sweepAngle = 360f,
+                useCenter = false,
+                topLeft = topLeft,
+                size = androidx.compose.ui.geometry.Size(arcSize, arcSize),
+                style = arcStroke
+            )
+            drawArc(
                 color = PrimaryAction,
-                modifier = Modifier.height(12.dp)
+                startAngle = -90f,
+                sweepAngle = 360f * progress.coerceIn(0f, 1f),
+                useCenter = false,
+                topLeft = topLeft,
+                size = androidx.compose.ui.geometry.Size(arcSize, arcSize),
+                style = arcStroke
+            )
+            if (overRatio > 0f) {
+                drawArc(
+                    color = AppDanger,
+                    startAngle = -90f,
+                    sweepAngle = 360f * overRatio.coerceIn(0.04f, 0.25f),
+                    useCenter = false,
+                    topLeft = topLeft,
+                    size = androidx.compose.ui.geometry.Size(arcSize, arcSize),
+                    style = Stroke(
+                        width = 5.dp.toPx(),
+                        cap = StrokeCap.Round
+                    )
+                )
+            }
+        }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                text = totalCalories.toString(),
+                style = MaterialTheme.typography.displaySmall,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimary
+            )
+            Text(
+                text = "of $targetCalories kcal",
+                style = MaterialTheme.typography.labelMedium,
+                color = TextMuted
             )
         }
     }
@@ -420,6 +502,33 @@ private fun NutritionPanel(
             color = TextPrimary
         )
 
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            MacroRingChip(
+                label = "Carbs",
+                value = carbsGram,
+                target = targetCarbsGram,
+                unit = "g",
+                color = CarbColor,
+                modifier = Modifier.weight(1f)
+            )
+            MacroRingChip(
+                label = "Protein",
+                value = proteinGram,
+                target = targetProteinGram,
+                unit = "g",
+                color = ProteinColor,
+                modifier = Modifier.weight(1f)
+            )
+            MacroRingChip(
+                label = "Fat",
+                value = fatGram,
+                target = targetFatGram,
+                unit = "g",
+                color = FatColor,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
         MacroSegmentBar(
             carbsGram = carbsGram,
             proteinGram = proteinGram,
@@ -432,32 +541,125 @@ private fun NutritionPanel(
 
         HorizontalDivider(color = AppOutline)
 
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(TonalSurface, RoundedCornerShape(8.dp))
-                .padding(horizontal = 14.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            HealthMetric(
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            HealthStatusCard(
                 label = "Fiber",
-                value = "${fiberGram}g / ${targetFiberGram}g",
+                value = fiberGram,
+                target = targetFiberGram,
+                unit = "g",
+                status = if (fiberGram >= targetFiberGram) "Good" else "Low",
                 color = FiberColor,
+                containerColor = if (fiberGram >= targetFiberGram) AppSuccessSoft else AppWarningSoft,
                 modifier = Modifier.weight(1f)
             )
-            HealthMetric(
+            HealthStatusCard(
                 label = "Sugar",
-                value = "${sugarGram}g / ${targetSugarGram}g",
+                value = sugarGram,
+                target = targetSugarGram,
+                unit = "g",
+                status = if (sugarGram > targetSugarGram) "High" else "OK",
                 color = SugarColor,
+                containerColor = if (sugarGram > targetSugarGram) AppDangerSoft else AppSuccessSoft,
                 modifier = Modifier.weight(1f)
             )
-            HealthMetric(
+            HealthStatusCard(
                 label = "Sodium",
-                value = "${sodiumMilligram}mg / ${targetSodiumMilligram}mg",
+                value = sodiumMilligram,
+                target = targetSodiumMilligram,
+                unit = "mg",
+                status = if (sodiumMilligram > targetSodiumMilligram) "High" else "OK",
                 color = SodiumColor,
+                containerColor = if (sodiumMilligram > targetSodiumMilligram) AppWarningSoft else AppSuccessSoft,
                 modifier = Modifier.weight(1f)
             )
         }
+    }
+}
+
+@Composable
+private fun MacroRingChip(
+    label: String,
+    value: Int,
+    target: Int,
+    unit: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    val progress = (value / target.toFloat()).coerceIn(0f, 1f)
+    val overAmount = (value - target).coerceAtLeast(0)
+
+    Column(
+        modifier = modifier
+            .background(AppSurfaceSoft, RoundedCornerShape(8.dp))
+            .border(1.dp, AppOutline, RoundedCornerShape(8.dp))
+            .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            MiniProgressRing(progress = progress, color = color)
+            Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = TextMuted
+                )
+                Text(
+                    text = "$value$unit",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimary
+                )
+            }
+        }
+        if (overAmount > 0) {
+            StatusPill(
+                text = "+$overAmount$unit",
+                color = AppDanger,
+                containerColor = AppDangerSoft
+            )
+        } else {
+            Text(
+                text = "Goal $target$unit",
+                style = MaterialTheme.typography.labelSmall,
+                color = TextMuted
+            )
+        }
+    }
+}
+
+@Composable
+private fun MiniProgressRing(
+    progress: Float,
+    color: Color
+) {
+    Canvas(modifier = Modifier.size(34.dp)) {
+        val strokeWidth = 4.dp.toPx()
+        val arcSize = size.minDimension - strokeWidth
+        val topLeft = Offset(
+            x = (size.width - arcSize) / 2f,
+            y = (size.height - arcSize) / 2f
+        )
+        drawArc(
+            color = TrackColor,
+            startAngle = -90f,
+            sweepAngle = 360f,
+            useCenter = false,
+            topLeft = topLeft,
+            size = androidx.compose.ui.geometry.Size(arcSize, arcSize),
+            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+        )
+        drawArc(
+            color = color,
+            startAngle = -90f,
+            sweepAngle = 360f * progress.coerceIn(0f, 1f),
+            useCenter = false,
+            topLeft = topLeft,
+            size = androidx.compose.ui.geometry.Size(arcSize, arcSize),
+            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+        )
     }
 }
 
@@ -514,6 +716,7 @@ private fun NutritionTargetRow(
     color: Color
 ) {
     val progress = (value / target.toFloat()).coerceIn(0f, 1f)
+    val overAmount = (value - target).coerceAtLeast(0)
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
@@ -525,12 +728,24 @@ private fun NutritionTargetRow(
                 style = MaterialTheme.typography.bodyMedium,
                 color = TextPrimary
             )
-            Text(
-                text = "$value$unit / $target$unit",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = TextPrimary
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (overAmount > 0) {
+                    StatusPill(
+                        text = "+$overAmount$unit",
+                        color = AppDanger,
+                        containerColor = AppDangerSoft
+                    )
+                }
+                Text(
+                    text = "$value$unit / $target$unit",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = TextPrimary
+                )
+            }
         }
         RoundedProgressBar(
             progress = progress,
@@ -564,18 +779,25 @@ private fun RoundedProgressBar(
 }
 
 @Composable
-private fun HealthMetric(
+private fun HealthStatusCard(
     label: String,
-    value: String,
+    value: Int,
+    target: Int,
+    unit: String,
+    status: String,
     color: Color,
+    containerColor: Color,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(5.dp)
+        modifier = modifier
+            .background(containerColor, RoundedCornerShape(8.dp))
+            .border(1.dp, color.copy(alpha = 0.18f), RoundedCornerShape(8.dp))
+            .padding(11.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(7.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -586,14 +808,40 @@ private fun HealthMetric(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
                 color = TextMuted
             )
         }
         Text(
-            text = value,
+            text = "$value$unit",
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Bold,
             color = TextPrimary
+        )
+        Text(
+            text = "$status · $target$unit",
+            style = MaterialTheme.typography.labelSmall,
+            color = color
+        )
+    }
+}
+
+@Composable
+private fun StatusPill(
+    text: String,
+    color: Color,
+    containerColor: Color
+) {
+    Box(
+        modifier = Modifier
+            .background(containerColor, RoundedCornerShape(50))
+            .padding(horizontal = 9.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = color
         )
     }
 }

@@ -45,7 +45,9 @@ import com.jaewonlee.aidietrecord.ui.theme.AppOutline
 import com.jaewonlee.aidietrecord.ui.theme.AppPrimary
 import com.jaewonlee.aidietrecord.ui.theme.AppSuccess
 import com.jaewonlee.aidietrecord.ui.theme.AppSurface
+import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceSoft
 import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
+import com.jaewonlee.aidietrecord.ui.theme.AppWarning
 import com.jaewonlee.aidietrecord.ui.theme.MacroCarb
 import com.jaewonlee.aidietrecord.ui.theme.MacroFat
 import java.time.LocalDate
@@ -768,15 +770,22 @@ private fun GoalProgressOverview(
     }
 
     GoalCard(title = "Daily Targets") {
-        NutritionPlanRow("Calories", "${goalPlan.dailyCalories} kcal")
-        NutritionPlanRow(
-            "Macros",
-            "Carbs ${goalPlan.dailyCarbsGram}g · Protein ${goalPlan.dailyProteinGram}g · Fat ${goalPlan.dailyFatGram}g"
+        GoalMetricCard(
+            label = "Calories",
+            value = "${goalPlan.dailyCalories} kcal",
+            color = GoalProgressColor,
+            modifier = Modifier.fillMaxWidth()
         )
-        NutritionPlanRow(
-            "Health limits",
-            "Fiber ${goalPlan.dailyFiberGram}g · Sugar ${goalPlan.dailySugarGram}g · Sodium ${goalPlan.dailySodiumMilligram}mg"
-        )
+        GoalFieldRow {
+            GoalMetricCard("Carbs", "${goalPlan.dailyCarbsGram}g", MuscleProgressColor, Modifier.weight(1f))
+            GoalMetricCard("Protein", "${goalPlan.dailyProteinGram}g", WeightProgressColor, Modifier.weight(1f))
+            GoalMetricCard("Fat", "${goalPlan.dailyFatGram}g", BodyFatProgressColor, Modifier.weight(1f))
+        }
+        GoalFieldRow {
+            GoalMetricCard("Fiber", "${goalPlan.dailyFiberGram}g", WeightProgressColor, Modifier.weight(1f))
+            GoalMetricCard("Sugar", "${goalPlan.dailySugarGram}g", AppWarning, Modifier.weight(1f))
+            GoalMetricCard("Sodium", "${goalPlan.dailySodiumMilligram}mg", AppTextMuted, Modifier.weight(1f))
+        }
     }
 
 }
@@ -1152,6 +1161,33 @@ private fun NutritionPlanRow(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+private fun GoalMetricCard(
+    label: String,
+    value: String,
+    color: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .background(AppSurfaceSoft, RoundedCornerShape(8.dp))
+            .padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = AppTextMuted
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Bold,
+            color = color
         )
     }
 }

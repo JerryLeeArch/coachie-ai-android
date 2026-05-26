@@ -40,13 +40,18 @@ import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.BodyMeasurementEntity
 import com.jaewonlee.aidietrecord.data.model.GoalPlanEntity
 import com.jaewonlee.aidietrecord.data.model.MealRecord
+import com.jaewonlee.aidietrecord.ui.theme.AppDanger
+import com.jaewonlee.aidietrecord.ui.theme.AppDangerSoft
 import com.jaewonlee.aidietrecord.ui.theme.AppOutline
 import com.jaewonlee.aidietrecord.ui.theme.AppPrimary
+import com.jaewonlee.aidietrecord.ui.theme.AppPrimarySoft
 import com.jaewonlee.aidietrecord.ui.theme.AppSuccess
+import com.jaewonlee.aidietrecord.ui.theme.AppSuccessSoft
 import com.jaewonlee.aidietrecord.ui.theme.AppSurface
 import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceSoft
 import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.theme.AppTextPrimary
+import com.jaewonlee.aidietrecord.ui.theme.AppWarningSoft
 import com.jaewonlee.aidietrecord.ui.theme.MacroCarb
 import com.jaewonlee.aidietrecord.ui.theme.MacroFat
 import com.jaewonlee.aidietrecord.ui.theme.MacroProtein
@@ -216,6 +221,34 @@ private fun StatsChip(
 }
 
 @Composable
+private fun ChartSummaryChip(
+    label: String,
+    value: String,
+    color: Color,
+    containerColor: Color,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .background(containerColor, RoundedCornerShape(8.dp))
+            .padding(horizontal = 10.dp, vertical = 9.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = AppTextMuted
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            color = color
+        )
+    }
+}
+
+@Composable
 private fun CalorieTrendChart(
     stats: List<DailyNutritionStats>,
     goalPlans: List<GoalPlanEntity>,
@@ -239,12 +272,38 @@ private fun CalorieTrendChart(
     val chartMax = points.maxOf { max(it.calories, it.targetCalories) }
         .coerceAtLeast(1)
         .let { (it * 1.15f).coerceAtLeast(100f) }
+    val latestPoint = points.last()
+    val calorieDelta = latestPoint.targetCalories - latestPoint.calories
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChartSummaryChip(
+                label = "Latest",
+                value = "${latestPoint.calories} kcal",
+                color = AppPrimary,
+                containerColor = AppPrimarySoft,
+                modifier = Modifier.weight(1f)
+            )
+            ChartSummaryChip(
+                label = "Goal",
+                value = "${latestPoint.targetCalories} kcal",
+                color = AppTextMuted,
+                containerColor = AppSurfaceSoft,
+                modifier = Modifier.weight(1f)
+            )
+            ChartSummaryChip(
+                label = if (calorieDelta < 0) "Over" else "Left",
+                value = "${abs(calorieDelta)} kcal",
+                color = if (calorieDelta < 0) AppDanger else AppSuccess,
+                containerColor = if (calorieDelta < 0) AppDangerSoft else AppSuccessSoft,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(176.dp)
+                .height(152.dp)
         ) {
             val leftPadding = 8.dp.toPx()
             val rightPadding = 8.dp.toPx()
@@ -252,8 +311,8 @@ private fun CalorieTrendChart(
             val bottomPadding = 20.dp.toPx()
             val chartWidth = size.width - leftPadding - rightPadding
             val chartHeight = size.height - topPadding - bottomPadding
-            val gridColor = AppOutline
-            val targetColor = AppTextMuted
+            val gridColor = AppOutline.copy(alpha = 0.62f)
+            val targetColor = AppTextMuted.copy(alpha = 0.72f)
             val calorieColor = AppPrimary
 
             fun x(index: Int): Float {
@@ -275,7 +334,7 @@ private fun CalorieTrendChart(
                     color = gridColor,
                     start = Offset(leftPadding, lineY),
                     end = Offset(leftPadding + chartWidth, lineY),
-                    strokeWidth = 1.dp.toPx()
+                    strokeWidth = 0.8.dp.toPx()
                 )
             }
 
@@ -284,25 +343,18 @@ private fun CalorieTrendChart(
                     Offset(x(index), y(points[index].targetCalories))
                 },
                 color = targetColor,
-                strokeWidth = 2.dp.toPx()
+                strokeWidth = 1.4.dp.toPx()
             )
             drawChartLine(
                 points = points.indices.map { index ->
                     Offset(x(index), y(points[index].calories))
                 },
                 color = calorieColor,
-                strokeWidth = 4.dp.toPx()
+                strokeWidth = 2.6.dp.toPx()
             )
         }
 
         ChartDateLabels(points.first().date, points.last().date)
-
-        val latestPoint = points.last()
-        Text(
-            text = "Latest: ${latestPoint.calories} / ${latestPoint.targetCalories} kcal",
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold
-        )
         ChartLegend(
             items = listOf(
                 ChartLegendItem("Intake", AppPrimary),
@@ -346,12 +398,37 @@ private fun NutritionTrendChart(
     }
         .coerceAtLeast(1f)
         .let { (it * 1.15f).coerceAtMost(2f) }
+    val latestPoint = points.last()
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ChartSummaryChip(
+                label = "Carbs",
+                value = "${latestPoint.carbsGram}g",
+                color = MacroCarb,
+                containerColor = AppSurfaceSoft,
+                modifier = Modifier.weight(1f)
+            )
+            ChartSummaryChip(
+                label = "Protein",
+                value = "${latestPoint.proteinGram}g",
+                color = MacroProtein,
+                containerColor = AppSuccessSoft,
+                modifier = Modifier.weight(1f)
+            )
+            ChartSummaryChip(
+                label = "Fat",
+                value = "${latestPoint.fatGram}g",
+                color = MacroFat,
+                containerColor = AppWarningSoft,
+                modifier = Modifier.weight(1f)
+            )
+        }
+
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(176.dp)
+                .height(152.dp)
         ) {
             val leftPadding = 8.dp.toPx()
             val rightPadding = 8.dp.toPx()
@@ -359,8 +436,8 @@ private fun NutritionTrendChart(
             val bottomPadding = 20.dp.toPx()
             val chartWidth = size.width - leftPadding - rightPadding
             val chartHeight = size.height - topPadding - bottomPadding
-            val gridColor = AppOutline
-            val targetColor = AppTextMuted
+            val gridColor = AppOutline.copy(alpha = 0.62f)
+            val targetColor = AppTextMuted.copy(alpha = 0.72f)
             val carbColor = MacroCarb
             val proteinColor = MacroProtein
             val fatColor = MacroFat
@@ -384,7 +461,7 @@ private fun NutritionTrendChart(
                     color = gridColor,
                     start = Offset(leftPadding, lineY),
                     end = Offset(leftPadding + chartWidth, lineY),
-                    strokeWidth = 1.dp.toPx()
+                    strokeWidth = 0.8.dp.toPx()
                 )
             }
 
@@ -393,39 +470,32 @@ private fun NutritionTrendChart(
                 color = targetColor,
                 start = Offset(leftPadding, targetY),
                 end = Offset(leftPadding + chartWidth, targetY),
-                strokeWidth = 2.dp.toPx()
+                strokeWidth = 1.4.dp.toPx()
             )
             drawChartLine(
                 points = points.indices.map { index ->
                     Offset(x(index), y(points[index].carbsProgress))
                 },
                 color = carbColor,
-                strokeWidth = 3.dp.toPx()
+                strokeWidth = 2.3.dp.toPx()
             )
             drawChartLine(
                 points = points.indices.map { index ->
                     Offset(x(index), y(points[index].proteinProgress))
                 },
                 color = proteinColor,
-                strokeWidth = 3.dp.toPx()
+                strokeWidth = 2.3.dp.toPx()
             )
             drawChartLine(
                 points = points.indices.map { index ->
                     Offset(x(index), y(points[index].fatProgress))
                 },
                 color = fatColor,
-                strokeWidth = 3.dp.toPx()
+                strokeWidth = 2.3.dp.toPx()
             )
         }
 
         ChartDateLabels(points.first().date, points.last().date)
-
-        val latestPoint = points.last()
-        Text(
-            text = "Latest: C ${latestPoint.carbsGram}/${latestPoint.targetCarbsGram}g · P ${latestPoint.proteinGram}/${latestPoint.targetProteinGram}g · F ${latestPoint.fatGram}/${latestPoint.targetFatGram}g",
-            style = MaterialTheme.typography.bodyMedium,
-            color = AppTextMuted
-        )
         ChartLegend(
             items = listOf(
                 ChartLegendItem("Carbs", MacroCarb),
@@ -658,37 +728,29 @@ private fun ChartDateLabels(
 
 @Composable
 private fun ChartLegend(items: List<ChartLegendItem>) {
-    Column(
+    Row(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        items.chunked(2).forEach { rowItems ->
+        items.forEach { item ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier
+                    .background(AppSurfaceSoft, RoundedCornerShape(50))
+                    .padding(horizontal = 9.dp, vertical = 5.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                rowItems.forEach { item ->
-                    Row(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(5.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(9.dp)
-                                .background(item.color, RoundedCornerShape(2.dp))
-                        )
-                        Text(
-                            text = item.label,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = AppTextMuted
-                        )
-                    }
-                }
-                if (rowItems.size == 1) {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(item.color, RoundedCornerShape(50))
+                )
+                Text(
+                    text = item.label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = AppTextMuted
+                )
             }
         }
     }
@@ -722,7 +784,7 @@ private fun DrawScope.drawChartLine(
     points.forEach { point ->
         drawCircle(
             color = color,
-            radius = strokeWidth * 0.9f,
+            radius = strokeWidth * 0.72f,
             center = point
         )
     }

@@ -1,13 +1,17 @@
 package com.jaewonlee.aidietrecord.ui.screen
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -23,15 +27,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealFoodRecord
 import com.jaewonlee.aidietrecord.data.model.MealRecord
 import com.jaewonlee.aidietrecord.ui.theme.AppOutline
 import com.jaewonlee.aidietrecord.ui.theme.AppSuccess
 import com.jaewonlee.aidietrecord.ui.theme.AppSurface
+import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceSoft
 import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
+import com.jaewonlee.aidietrecord.ui.theme.MacroCarb
+import com.jaewonlee.aidietrecord.ui.theme.MacroFat
+import com.jaewonlee.aidietrecord.ui.theme.MacroFiber
+import com.jaewonlee.aidietrecord.ui.theme.MacroProtein
+import com.jaewonlee.aidietrecord.ui.theme.MacroSodium
+import com.jaewonlee.aidietrecord.ui.theme.MacroSugar
 import com.jaewonlee.aidietrecord.ui.util.UriImage
 import com.jaewonlee.aidietrecord.ui.util.formatMealDateTime
 
@@ -76,13 +89,13 @@ fun MealDetailScreen(
             UriImage(
                 imageUri = mealRecord.imageUri,
                 placeholderText = if (mealRecord.imageUri == null) {
-                    "No meal photo saved"
+                    "No photo"
                 } else {
                     "Unable to load meal photo"
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
+                    .height(if (mealRecord.imageUri == null) 136.dp else 220.dp)
             )
 
             Card(
@@ -97,16 +110,36 @@ fun MealDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
+                        text = "Meal summary",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = AppTextMuted
+                    )
+                    Text(
                         text = mealRecord.foodName,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
                     Text(
                         text = "Logged at: ${formatMealDateTime(mealRecord.createdAt)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = AppTextMuted
                     )
-                    Text("${mealRecord.calories} kcal", style = MaterialTheme.typography.titleMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        NutritionMetricPill(
+                            label = "Calories",
+                            value = "${mealRecord.calories} kcal",
+                            color = AppSuccess,
+                            modifier = Modifier.weight(1f)
+                        )
+                        NutritionMetricPill(
+                            label = "Foods",
+                            value = "${mealRecord.foods.size}",
+                            color = AppTextMuted,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
                     Text(
                         text = mealRecord.memo.ifBlank { "No memo" },
                         style = MaterialTheme.typography.bodyMedium
@@ -132,26 +165,9 @@ fun MealDetailScreen(
                 }
             }
 
-            Card(
-                colors = CardDefaults.cardColors(containerColor = AppSurface),
-                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                border = BorderStroke(1.dp, AppOutline),
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(18.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Food Items",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
-                    )
-                    mealRecord.foods.forEach { food ->
-                        MealFoodInfoRow(food = food)
-                    }
-                }
+            SectionTitle(text = "Food Items")
+            mealRecord.foods.forEach { food ->
+                MealFoodCard(food = food)
             }
 
             Card(
@@ -170,12 +186,16 @@ fun MealDetailScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    NutritionInfoRow("Carbs", "${mealRecord.carbsGram}g")
-                    NutritionInfoRow("Protein", "${mealRecord.proteinGram}g")
-                    NutritionInfoRow("Fat", "${mealRecord.fatGram}g")
-                    NutritionInfoRow("Fiber", "${mealRecord.fiberGram}g")
-                    NutritionInfoRow("Sugar", "${mealRecord.sugarGram}g")
-                    NutritionInfoRow("Sodium", "${mealRecord.sodiumMilligram}mg")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        NutritionMetricPill("Carbs", "${mealRecord.carbsGram}g", MacroCarb, Modifier.weight(1f))
+                        NutritionMetricPill("Protein", "${mealRecord.proteinGram}g", MacroProtein, Modifier.weight(1f))
+                        NutritionMetricPill("Fat", "${mealRecord.fatGram}g", MacroFat, Modifier.weight(1f))
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        NutritionMetricPill("Fiber", "${mealRecord.fiberGram}g", MacroFiber, Modifier.weight(1f))
+                        NutritionMetricPill("Sugar", "${mealRecord.sugarGram}g", MacroSugar, Modifier.weight(1f))
+                        NutritionMetricPill("Sodium", "${mealRecord.sodiumMilligram}mg", MacroSodium, Modifier.weight(1f))
+                    }
                 }
             }
 
@@ -234,51 +254,102 @@ fun MealDetailScreen(
 }
 
 @Composable
-private fun MealFoodInfoRow(food: MealFoodRecord) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+private fun SectionTitle(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        modifier = Modifier.padding(top = 2.dp)
+    )
+}
+
+@Composable
+private fun MealFoodCard(food: MealFoodRecord) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, AppOutline),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text(
-                text = food.foodName,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold
-            )
-            Text(
-                text = "${food.calories} kcal",
-                style = MaterialTheme.typography.bodyMedium,
-                color = AppSuccess
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = food.foodName,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                Text(
+                    text = "${food.calories} kcal",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = AppSuccess,
+                    modifier = Modifier.padding(start = 12.dp)
+                )
+            }
+            if (food.description.isNotBlank()) {
+                Text(
+                    text = food.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AppTextMuted,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                NutritionMetricPill("Carbs", "${food.carbsGram}g", MacroCarb, Modifier.weight(1f))
+                NutritionMetricPill("Protein", "${food.proteinGram}g", MacroProtein, Modifier.weight(1f))
+                NutritionMetricPill("Fat", "${food.fatGram}g", MacroFat, Modifier.weight(1f))
+            }
         }
-        Text(
-            text = "Carbs ${food.carbsGram}g · Protein ${food.proteinGram}g · Fat ${food.fatGram}g",
-            style = MaterialTheme.typography.bodySmall,
-            color = AppTextMuted
-        )
-        Text(
-            text = "Fiber ${food.fiberGram}g · Sugar ${food.sugarGram}g · Sodium ${food.sodiumMilligram}mg",
-            style = MaterialTheme.typography.bodySmall,
-            color = AppTextMuted
-        )
     }
 }
 
 @Composable
-private fun NutritionInfoRow(
+private fun NutritionMetricPill(
     label: String,
-    value: String
+    value: String,
+    color: androidx.compose.ui.graphics.Color,
+    modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+    Column(
+        modifier = modifier
+            .background(AppSurfaceSoft, RoundedCornerShape(8.dp))
+            .padding(horizontal = 10.dp, vertical = 9.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
-        Text(label, style = MaterialTheme.typography.bodyMedium)
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(7.dp)
+                    .background(color, CircleShape)
+            )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = AppTextMuted,
+                maxLines = 1
+            )
+        }
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = AppSuccess
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
