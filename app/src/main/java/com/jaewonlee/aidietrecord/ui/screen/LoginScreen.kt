@@ -74,7 +74,7 @@ fun LoginScreen(
                     )
                     Text(
                         text = if (isRegisterMode) {
-                            "Create a local account and start tracking meals."
+                            "Create an account. Your meal data stays on this device."
                         } else {
                             "Enter your email and password."
                         },
@@ -198,7 +198,7 @@ private fun validateAuthInput(
         !userId.isValidEmail() -> "Enter a valid email."
         isRegisterMode && nickname.isBlank() -> "Enter a nickname."
         password.isBlank() -> "Enter a password."
-        password.length < 4 -> "Password must be at least 4 characters."
+        password.length < 6 -> "Password must be at least 6 characters."
         else -> null
     }
 }

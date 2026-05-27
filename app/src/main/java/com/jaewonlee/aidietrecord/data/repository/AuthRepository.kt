@@ -3,8 +3,13 @@ package com.jaewonlee.aidietrecord.data.repository
 import com.jaewonlee.aidietrecord.data.local.AuthDao
 import com.jaewonlee.aidietrecord.data.model.UserAccount
 import com.google.android.gms.tasks.Task
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseAuthRecentLoginRequiredException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.UserProfileChangeRequest
 import kotlin.coroutines.resume
@@ -150,6 +155,23 @@ private suspend fun <T> runCatchingAuth(block: suspend () -> T): Result<T> {
         block()
     }.mapError { throwable ->
         when (throwable) {
+            is FirebaseNetworkException -> {
+                IllegalStateException(
+                    "Could not reach Firebase. Check the device internet connection and Firebase setup."
+                )
+            }
+            is FirebaseAuthInvalidCredentialsException -> {
+                IllegalArgumentException("Check your email and password.")
+            }
+            is FirebaseAuthInvalidUserException -> {
+                IllegalArgumentException("No account was found for this email.")
+            }
+            is FirebaseAuthUserCollisionException -> {
+                IllegalArgumentException("This email is already registered.")
+            }
+            is FirebaseAuthWeakPasswordException -> {
+                IllegalArgumentException("Use a stronger password with at least 6 characters.")
+            }
             is FirebaseAuthRecentLoginRequiredException -> {
                 IllegalStateException("Log in again before changing email or password.")
             }

@@ -735,7 +735,7 @@ private fun validateProfileInput(
     return when {
         userId.isBlank() -> "Enter an email."
         nickname.isBlank() -> "Enter a nickname."
-        password.isNotBlank() && password.length < 4 -> "New password must be at least 4 characters."
+        password.isNotBlank() && password.length < 6 -> "New password must be at least 6 characters."
         else -> null
     }
 }
