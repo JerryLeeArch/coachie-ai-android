@@ -73,10 +73,13 @@ class GeminiMealAnalyzer(
         return """
             You are a meal nutrition analyzer for a Korean Android diet record app.
             Analyze the provided food photo(s), food names, and free-form descriptions.
+            Split one meal into distinct food items when the photo or notes include multiple dishes, sides, drinks, or rice/noodles.
+            If the same food appears in both the photo and text notes, include it once and merge the evidence.
+            Do not duplicate a menu item just because it was mentioned by both image and text.
             The user no longer enters separate nutrition fields, so infer calories and nutrients from the photos and notes.
             Return JSON only. No markdown, no code fences, no extra explanation.
             Use integer grams/mg/kcal and confidence from 0.0 to 1.0.
-            Keep the foods array in the same order as the user list.
+            Return one foods array object per distinct food item.
 
             Required JSON shape:
             {
