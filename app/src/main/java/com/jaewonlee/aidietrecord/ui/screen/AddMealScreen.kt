@@ -43,6 +43,13 @@ import com.jaewonlee.aidietrecord.ui.theme.AppOutline
 import com.jaewonlee.aidietrecord.ui.theme.AppSurface
 import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.util.UriImage
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun AddMealScreen(
@@ -59,6 +66,12 @@ fun AddMealScreen(
     }
     var nextDraftId by remember(initialMeal?.id) {
         mutableStateOf((foodDrafts.maxOfOrNull { it.id } ?: 0L) + 1L)
+    }
+    var mealDateText by remember(initialMeal?.id, initialMeal?.createdAt) {
+        mutableStateOf((initialMeal?.createdAt ?: System.currentTimeMillis()).toMealEditDateText())
+    }
+    var mealTimeText by remember(initialMeal?.id, initialMeal?.createdAt) {
+        mutableStateOf((initialMeal?.createdAt ?: System.currentTimeMillis()).toMealEditTimeText())
     }
     var errorMessage by remember(initialMeal?.id) { mutableStateOf<String?>(null) }
 
@@ -92,6 +105,28 @@ fun AddMealScreen(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            SectionHeader(
+                title = "Meal Time",
+                trailingText = "Logged at"
+            )
+
+            MealDateTimeCard(
+                dateText = mealDateText,
+                timeText = mealTimeText,
+                onDateChange = { value ->
+                    if (value.isMealDateInput()) {
+                        mealDateText = value.take(10)
+                        errorMessage = null
+                    }
+                },
+                onTimeChange = { value ->
+                    if (value.isMealTimeInput()) {
+                        mealTimeText = value.take(5)
+                        errorMessage = null
+                    }
+                }
+            )
+
             SectionHeader(
                 title = "Food Items",
                 trailingText = itemCountText(foodDrafts.size)
@@ -177,8 +212,15 @@ fun AddMealScreen(
                         else -> null
                     }
 
-                    if (errorMessage == null) {
-                        val createdAt = initialMeal?.createdAt ?: System.currentTimeMillis()
+                    val editedCreatedAt = parseMealDateTime(
+                        dateText = mealDateText,
+                        timeText = mealTimeText
+                    )
+                    if (errorMessage == null && editedCreatedAt == null) {
+                        errorMessage = "Enter a valid meal date and time."
+                    }
+
+                    if (errorMessage == null && editedCreatedAt != null) {
                         val foods = foodDrafts.map { it.toMealFoodDraft() }
                         onSaveClick(
                             MealUploadDraft(
@@ -186,7 +228,7 @@ fun AddMealScreen(
                                 ownerId = initialMeal?.ownerId ?: 0,
                                 memo = foods.toMealMemo(initialMeal?.memo.orEmpty()),
                                 imageUri = foods.firstNotNullOfOrNull { it.imageUri },
-                                createdAt = createdAt,
+                                createdAt = editedCreatedAt,
                                 foods = foods
                             )
                         )
@@ -359,6 +401,46 @@ private fun SectionHeader(
             style = MaterialTheme.typography.labelLarge,
             color = AppTextMuted
         )
+    }
+}
+
+@Composable
+private fun MealDateTimeCard(
+    dateText: String,
+    timeText: String,
+    onDateChange: (String) -> Unit,
+    onTimeChange: (String) -> Unit
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        border = BorderStroke(1.dp, AppOutline),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = dateText,
+                onValueChange = onDateChange,
+                label = { Text("Date") },
+                placeholder = { Text("2026.05.27") },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
+            OutlinedTextField(
+                value = timeText,
+                onValueChange = onTimeChange,
+                label = { Text("Time") },
+                placeholder = { Text("13:30") },
+                singleLine = true,
+                modifier = Modifier.weight(1f)
+            )
+        }
     }
 }
 
@@ -572,6 +654,18 @@ private data class FoodDraftUiState(
     val sodiumMilligram: String = ""
 )
 
+private val mealEditDateFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("uuuu.MM.dd", Locale.KOREAN)
+
+private val mealEditDateParser: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("uuuu.M.d", Locale.KOREAN)
+
+private val mealEditTimeFormatter: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("HH:mm", Locale.KOREAN)
+
+private val mealEditTimeParser: DateTimeFormatter =
+    DateTimeFormatter.ofPattern("H:mm", Locale.KOREAN)
+
 private fun MealRecord?.toFoodDrafts(): List<FoodDraftUiState> {
     val existingFoods = this?.foods.orEmpty()
     if (existingFoods.isEmpty()) {
@@ -628,6 +722,66 @@ private fun String.isWholeNumberInput(): Boolean {
     return all { it.isDigit() }
 }
 
+private fun String.isMealDateInput(): Boolean {
+    return all { it.isDigit() || it == '.' || it == '-' || it == '/' }
+}
+
+private fun String.isMealTimeInput(): Boolean {
+    return all { it.isDigit() || it == ':' }
+}
+
 private fun String.toNullableInt(): Int? {
     return trim().takeIf { it.isNotBlank() }?.toIntOrNull()
+}
+
+private fun Long.toMealEditDateText(): String {
+    return Instant.ofEpochMilli(this)
+        .atZone(ZoneId.systemDefault())
+        .toLocalDate()
+        .format(mealEditDateFormatter)
+}
+
+private fun Long.toMealEditTimeText(): String {
+    return Instant.ofEpochMilli(this)
+        .atZone(ZoneId.systemDefault())
+        .toLocalTime()
+        .format(mealEditTimeFormatter)
+}
+
+private fun parseMealDateTime(
+    dateText: String,
+    timeText: String
+): Long? {
+    val date = parseMealDate(dateText) ?: return null
+    val time = parseMealTime(timeText) ?: return null
+    return LocalDateTime.of(date, time)
+        .atZone(ZoneId.systemDefault())
+        .toInstant()
+        .toEpochMilli()
+}
+
+private fun parseMealDate(dateText: String): LocalDate? {
+    val normalizedDate = dateText
+        .trim()
+        .replace('-', '.')
+        .replace('/', '.')
+    return runCatching {
+        LocalDate.parse(normalizedDate, mealEditDateParser)
+    }.getOrNull()
+}
+
+private fun parseMealTime(timeText: String): LocalTime? {
+    val trimmedTime = timeText.trim()
+    val normalizedTime = if (':' in trimmedTime) {
+        trimmedTime
+    } else {
+        when (trimmedTime.length) {
+            3 -> "${trimmedTime.take(1)}:${trimmedTime.takeLast(2)}"
+            4 -> "${trimmedTime.take(2)}:${trimmedTime.takeLast(2)}"
+            else -> trimmedTime
+        }
+    }
+    return runCatching {
+        LocalTime.parse(normalizedTime, mealEditTimeParser)
+    }.getOrNull()
 }

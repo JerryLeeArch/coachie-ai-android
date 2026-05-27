@@ -11,8 +11,8 @@ Kotlin과 Jetpack Compose를 사용하여 개발 중인 모바일 프로그래�
 
 ## 구현된 주요 기능
 
-- 로그인 및 회원가입
-- 사용자별 식단 기록 분리
+- Firebase Authentication 기반 이메일 회원가입, 로그인, 비밀번호 재설정
+- Firebase UID와 로컬 사용자 row를 매핑한 사용자별 식단 기록 분리
 - 홈 화면에서 현재 목표 기준 오늘 섭취 칼로리, 남은 칼로리, 영양소 요약 표시
 - 음식 추가 화면에서 여러 음식 항목 입력
 - 음식 항목별 사진 선택, 변경, 삭제
@@ -26,7 +26,8 @@ Kotlin과 Jetpack Compose를 사용하여 개발 중인 모바일 프로그래�
 - 목표 설정 화면에서 시작일/목표일, 현재 체중, 골격근량, 기초대사량, 체지방률, 목표 체성분 입력
 - 목표 설정 화면에서 AI 영양 목표 제안 및 수동 목표 조정 지원
 - 체중, 골격근량, 기초대사량, 체지방량, 체지방률 측정 기록 저장
-- 프로필 화면에서 닉네임, 아이디, 비밀번호 수정 및 로그아웃
+- 프로필 화면에서 닉네임, 이메일, 비밀번호 수정 및 로그아웃
+- 프로필 화면에서 현재 회원의 식단/목표/체성분 데이터를 JSON 파일로 export/import
 
 ## 화면 구성
 
@@ -63,6 +64,7 @@ Kotlin과 Jetpack Compose를 사용하여 개발 중인 모바일 프로그래�
 - Room Database
 - Kotlin Coroutines / Flow
 - Android Activity Result API
+- Firebase Authentication
 - Firebase AI SDK
 - Google Services Gradle Plugin
 
@@ -70,7 +72,7 @@ Kotlin과 Jetpack Compose를 사용하여 개발 중인 모바일 프로그래�
 
 Room Database는 다음 Entity를 사용한다.
 
-- `UserAccount`: 로컬 사용자 계정 정보
+- `UserAccount`: Firebase UID와 연결되는 로컬 사용자 프로필 정보
 - `MealEntity`: 한 끼 식단 기록의 대표 정보
 - `MealFoodEntity`: 한 끼 식단에 포함된 개별 음식 항목
 - `GoalPlanEntity`: 사용자별 목표 기간, 목표 체성분, 일일 영양 목표 정보
@@ -78,6 +80,7 @@ Room Database는 다음 Entity를 사용한다.
 
 한 끼 식단은 여러 음식 항목을 가질 수 있도록 `MealEntity`와 `MealFoodEntity`를 1:N 구조로 분리했다. 화면에서는 `MealWithFoods`를 `MealRecord`로 변환하여 사용한다.
 목표 관리는 사용자별로 `GoalPlanEntity`와 `BodyMeasurementEntity`를 저장하여 홈 화면 목표치와 최근 통계 화면의 목표 대비 추세에 반영한다.
+회원 인증은 Firebase Authentication이 담당하고, 식단/목표/체성분 데이터는 서버가 아니라 기기 내부 Room DB에 Firebase UID와 매핑된 로컬 사용자 ID 기준으로 저장한다. 프로필 화면의 export/import 기능은 현재 로그인한 회원의 로컬 데이터를 하나의 JSON 파일로 백업하거나 복원한다.
 
 ## 과제 요구사항 충족 상태
 
@@ -87,5 +90,5 @@ Room Database는 다음 Entity를 사용한다.
 | 1개 이상의 리스트 페이지 | MealListScreen에서 LazyColumn 식단 기록 리스트 구현                               |
 | 이미지 포함              | OpenDocument 이미지 선택 및 UriImage 미리보기 구현                                |
 | 데이터베이스             | Room DB로 사용자, 식단, 음식 항목, 목표, 체성분 기록 저장/조회 구현               |
-| 선택 기능                | Firebase AI Gemini 기반 AI 분석 기능 구현                                         |
+| 선택 기능                | Firebase Auth 회원관리, Firebase AI Gemini 기반 AI 분석 기능 구현                 |
 | 패키지 구조              | data, navigation, ui.screen, ui.util 등으로 분리                                  |

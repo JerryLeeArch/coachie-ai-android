@@ -26,6 +26,7 @@ import com.jaewonlee.aidietrecord.data.repository.AuthRepository
 import com.jaewonlee.aidietrecord.data.repository.GoalRepository
 import com.jaewonlee.aidietrecord.data.repository.MealReviewRepository
 import com.jaewonlee.aidietrecord.data.repository.MealRepository
+import com.jaewonlee.aidietrecord.data.repository.UserDataPortabilityRepository
 import com.jaewonlee.aidietrecord.ui.screen.AddMealScreen
 import com.jaewonlee.aidietrecord.ui.screen.GoalSettingsScreen
 import com.jaewonlee.aidietrecord.ui.screen.HomeScreen
@@ -64,16 +65,21 @@ fun AIDietNavHost() {
     val authRepository = remember(mealDatabase) {
         AuthRepository(mealDatabase.authDao())
     }
+    val dataPortabilityRepository = remember(mealDatabase) {
+        UserDataPortabilityRepository(mealDatabase)
+    }
 
     var currentUserId by rememberSaveable {
-        mutableStateOf(authSessionStore.getSavedUserId())
+        mutableStateOf(0L)
     }
+    var currentUserFirebaseUid by rememberSaveable { mutableStateOf<String?>(null) }
     var currentUserLoginId by rememberSaveable { mutableStateOf("") }
     var currentUserNickname by rememberSaveable { mutableStateOf("") }
     var currentUserPasswordHash by rememberSaveable { mutableStateOf("") }
     var currentUserCreatedAt by rememberSaveable { mutableStateOf(0L) }
     val currentUser = currentUserOrNull(
         id = currentUserId,
+        firebaseUid = currentUserFirebaseUid,
         userId = currentUserLoginId,
         nickname = currentUserNickname,
         passwordHash = currentUserPasswordHash,
@@ -119,7 +125,10 @@ fun AIDietNavHost() {
     var userId by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var authErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var authInfoMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var profileErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var profileInfoMessage by rememberSaveable { mutableStateOf<String?>(null) }
+    var dataTransferInProgress by rememberSaveable { mutableStateOf(false) }
     val defaultGoalStartDate = remember { LocalDate.now().toString() }
     val defaultGoalEndDate = remember { LocalDate.now().plusWeeks(8).minusDays(1).toString() }
     var goalStartDate by rememberSaveable { mutableStateOf(defaultGoalStartDate) }
@@ -143,12 +152,11 @@ fun AIDietNavHost() {
     var manualTargetsEnabled by rememberSaveable { mutableStateOf(false) }
     var mealSaveInProgress by rememberSaveable { mutableStateOf(false) }
     var pendingMealReview by remember { mutableStateOf<PendingMealReviewState?>(null) }
-    var authRestoreCompleted by rememberSaveable {
-        mutableStateOf(authSessionStore.getSavedUserId() <= 0L)
-    }
+    var authRestoreCompleted by rememberSaveable { mutableStateOf(false) }
 
     val setCurrentUser: (UserAccount?) -> Unit = { userAccount ->
         currentUserId = userAccount?.id ?: 0L
+        currentUserFirebaseUid = userAccount?.firebaseUid
         currentUserLoginId = userAccount?.userId.orEmpty()
         currentUserNickname = userAccount?.nickname.orEmpty()
         currentUserPasswordHash = userAccount?.passwordHash.orEmpty()
@@ -156,22 +164,21 @@ fun AIDietNavHost() {
     }
 
     LaunchedEffect(Unit) {
-        val savedUserId = authSessionStore.getSavedUserId()
-        if (savedUserId > 0L) {
-            val savedUser = authRepository.getUserById(savedUserId)
-            if (savedUser == null) {
-                authSessionStore.clear()
-                setCurrentUser(null)
-                nickname = ""
-                userId = ""
-                password = ""
-            } else {
-                setCurrentUser(savedUser)
-                nickname = savedUser.nickname
-                userId = savedUser.userId
-                password = ""
-                authErrorMessage = null
-            }
+        val signedInUser = authRepository.getSignedInUser()
+        if (signedInUser == null) {
+            authSessionStore.clear()
+            setCurrentUser(null)
+            nickname = ""
+            userId = ""
+            password = ""
+        } else {
+            authSessionStore.saveUserId(signedInUser.id)
+            setCurrentUser(signedInUser)
+            nickname = signedInUser.nickname
+            userId = signedInUser.userId
+            password = ""
+            authErrorMessage = null
+            authInfoMessage = null
         }
         authRestoreCompleted = true
     }
@@ -255,23 +262,29 @@ fun AIDietNavHost() {
         composable(Route.Login.path) {
             LoginScreen(
                 errorMessage = authErrorMessage,
+                infoMessage = authInfoMessage,
                 onLoginClick = { loginId, loginPassword ->
                     coroutineScope.launch {
-                        val userAccount = authRepository.login(loginId, loginPassword)
-                        if (userAccount == null) {
-                            authErrorMessage = "The login ID or password is incorrect."
-                        } else {
-                            authSessionStore.saveUserId(userAccount.id)
-                            setCurrentUser(userAccount)
-                            nickname = userAccount.nickname
-                            userId = userAccount.userId
-                            password = ""
-                            currentMetabolicRate = ""
-                            authErrorMessage = null
-                            navController.navigate(Route.Home.path) {
-                                popUpTo(Route.Login.path) { inclusive = true }
+                        authRepository
+                            .login(loginId, loginPassword)
+                            .onSuccess { userAccount ->
+                                authSessionStore.saveUserId(userAccount.id)
+                                setCurrentUser(userAccount)
+                                nickname = userAccount.nickname
+                                userId = userAccount.userId
+                                password = ""
+                                currentMetabolicRate = ""
+                                authErrorMessage = null
+                                authInfoMessage = null
+                                navController.navigate(Route.Home.path) {
+                                    popUpTo(Route.Login.path) { inclusive = true }
+                                }
                             }
-                        }
+                            .onFailure { throwable ->
+                                authInfoMessage = null
+                                authErrorMessage = throwable.message
+                                    ?: "The email or password is incorrect."
+                            }
                     }
                 },
                 onRegisterClick = { loginId, registerNickname, loginPassword ->
@@ -290,12 +303,29 @@ fun AIDietNavHost() {
                                 password = ""
                                 currentMetabolicRate = ""
                                 authErrorMessage = null
+                                authInfoMessage = null
                                 navController.navigate(Route.Home.path) {
                                     popUpTo(Route.Login.path) { inclusive = true }
                                 }
                             }
                             .onFailure { throwable ->
+                                authInfoMessage = null
                                 authErrorMessage = throwable.message ?: "Registration failed."
+                            }
+                    }
+                },
+                onPasswordResetClick = { loginId ->
+                    coroutineScope.launch {
+                        authRepository
+                            .sendPasswordResetEmail(loginId)
+                            .onSuccess {
+                                authErrorMessage = null
+                                authInfoMessage = "Password reset email sent."
+                            }
+                            .onFailure { throwable ->
+                                authInfoMessage = null
+                                authErrorMessage = throwable.message
+                                    ?: "Password reset failed."
                             }
                     }
                 }
@@ -449,22 +479,28 @@ fun AIDietNavHost() {
                 onNicknameChange = {
                     nickname = it
                     profileErrorMessage = null
+                    profileInfoMessage = null
                 },
                 userId = userId,
                 onUserIdChange = {
                     userId = it
                     profileErrorMessage = null
+                    profileInfoMessage = null
                 },
                 password = password,
                 onPasswordChange = {
                     password = it
                     profileErrorMessage = null
+                    profileInfoMessage = null
                 },
                 errorMessage = profileErrorMessage,
+                infoMessage = profileInfoMessage,
+                isDataTransferInProgress = dataTransferInProgress,
                 onBackClick = { navController.navigateUp() },
                 onSaveClick = {
                     val userAccount = currentUser
                     profileErrorMessage = validateProfileInput(userId, nickname, password)
+                    profileInfoMessage = null
                     if (userAccount != null && profileErrorMessage == null) {
                         coroutineScope.launch {
                             authRepository
@@ -481,15 +517,81 @@ fun AIDietNavHost() {
                                     userId = updatedUser.userId
                                     password = ""
                                     profileErrorMessage = null
-                                    navController.navigateUp()
+                                    profileInfoMessage = "Profile saved."
                                 }
                                 .onFailure { throwable ->
+                                    profileInfoMessage = null
                                     profileErrorMessage = throwable.message ?: "Profile update failed."
                                 }
                         }
                     }
                 },
+                onPasswordResetClick = {
+                    coroutineScope.launch {
+                        authRepository
+                            .sendPasswordResetEmail(userId)
+                            .onSuccess {
+                                profileErrorMessage = null
+                                profileInfoMessage = "Password reset email sent."
+                            }
+                            .onFailure { throwable ->
+                                profileInfoMessage = null
+                                profileErrorMessage = throwable.message ?: "Password reset failed."
+                            }
+                    }
+                },
+                onExportDataSelected = { uri ->
+                    val userAccount = currentUser
+                    if (userAccount == null) {
+                        profileErrorMessage = "Log in again before exporting data."
+                        profileInfoMessage = null
+                    } else {
+                        coroutineScope.launch {
+                            dataTransferInProgress = true
+                            runCatching {
+                                val outputStream = context.contentResolver.openOutputStream(uri)
+                                    ?: error("Could not open the export file.")
+                                outputStream.use { output ->
+                                    dataPortabilityRepository.exportUserData(userAccount, output)
+                                }
+                            }.onSuccess { summary ->
+                                profileErrorMessage = null
+                                profileInfoMessage = summary.toStatusText("Exported")
+                            }.onFailure { throwable ->
+                                profileInfoMessage = null
+                                profileErrorMessage = throwable.message ?: "Export failed."
+                            }
+                            dataTransferInProgress = false
+                        }
+                    }
+                },
+                onImportDataSelected = { uri ->
+                    val userAccount = currentUser
+                    if (userAccount == null) {
+                        profileErrorMessage = "Log in again before importing data."
+                        profileInfoMessage = null
+                    } else {
+                        coroutineScope.launch {
+                            dataTransferInProgress = true
+                            runCatching {
+                                val inputStream = context.contentResolver.openInputStream(uri)
+                                    ?: error("Could not open the import file.")
+                                inputStream.use { input ->
+                                    dataPortabilityRepository.importUserData(userAccount.id, input)
+                                }
+                            }.onSuccess { summary ->
+                                profileErrorMessage = null
+                                profileInfoMessage = summary.toStatusText("Imported")
+                            }.onFailure { throwable ->
+                                profileInfoMessage = null
+                                profileErrorMessage = throwable.message ?: "Import failed."
+                            }
+                            dataTransferInProgress = false
+                        }
+                    }
+                },
                 onLogoutClick = {
+                    authRepository.logout()
                     authSessionStore.clear()
                     setCurrentUser(null)
                     nickname = ""
@@ -497,7 +599,9 @@ fun AIDietNavHost() {
                     password = ""
                     currentMetabolicRate = ""
                     profileErrorMessage = null
+                    profileInfoMessage = null
                     authErrorMessage = null
+                    authInfoMessage = null
                     navController.navigate(Route.Login.path) {
                         popUpTo(Route.Home.path) { inclusive = true }
                     }
@@ -606,6 +710,7 @@ private fun Double.toGoalNumberText(): String {
 
 private fun currentUserOrNull(
     id: Long,
+    firebaseUid: String?,
     userId: String,
     nickname: String,
     passwordHash: String,
@@ -614,6 +719,7 @@ private fun currentUserOrNull(
     if (id <= 0) return null
     return UserAccount(
         id = id,
+        firebaseUid = firebaseUid,
         userId = userId,
         nickname = nickname,
         passwordHash = passwordHash,
@@ -627,7 +733,7 @@ private fun validateProfileInput(
     password: String
 ): String? {
     return when {
-        userId.isBlank() -> "Enter a login ID."
+        userId.isBlank() -> "Enter an email."
         nickname.isBlank() -> "Enter a nickname."
         password.isNotBlank() && password.length < 4 -> "New password must be at least 4 characters."
         else -> null

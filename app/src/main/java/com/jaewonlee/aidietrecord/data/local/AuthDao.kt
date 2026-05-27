@@ -15,6 +15,9 @@ interface AuthDao {
     @Query("SELECT * FROM user_accounts WHERE userId = :userId LIMIT 1")
     suspend fun getUserByUserId(userId: String): UserAccount?
 
+    @Query("SELECT * FROM user_accounts WHERE firebaseUid = :firebaseUid LIMIT 1")
+    suspend fun getUserByFirebaseUid(firebaseUid: String): UserAccount?
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertUserAccount(userAccount: UserAccount): Long
 

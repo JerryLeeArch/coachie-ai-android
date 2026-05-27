@@ -1,5 +1,8 @@
 package com.jaewonlee.aidietrecord.ui.screen
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,10 +28,30 @@ fun ProfileScreen(
     password: String,
     onPasswordChange: (String) -> Unit,
     errorMessage: String?,
+    infoMessage: String?,
+    isDataTransferInProgress: Boolean,
     onBackClick: () -> Unit,
     onSaveClick: () -> Unit,
+    onPasswordResetClick: () -> Unit,
+    onExportDataSelected: (Uri) -> Unit,
+    onImportDataSelected: (Uri) -> Unit,
     onLogoutClick: () -> Unit
 ) {
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            onExportDataSelected(uri)
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            onImportDataSelected(uri)
+        }
+    }
+
     ScreenScaffold(
         title = "Profile",
         onBackClick = onBackClick
@@ -41,7 +64,7 @@ fun ProfileScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Update your nickname, login ID, or password. Leave the password blank to keep the current one.",
+                text = "Update your nickname, email, or password. Leave the password blank to keep the current one.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -55,7 +78,7 @@ fun ProfileScreen(
             OutlinedTextField(
                 value = userId,
                 onValueChange = onUserIdChange,
-                label = { Text("Login ID") },
+                label = { Text("Email") },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -74,11 +97,38 @@ fun ProfileScreen(
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+            if (infoMessage != null) {
+                Text(
+                    text = infoMessage,
+                    color = MaterialTheme.colorScheme.primary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
             Button(
                 onClick = onSaveClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Save Profile")
+            }
+            OutlinedButton(
+                onClick = onPasswordResetClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Send Password Reset Email")
+            }
+            OutlinedButton(
+                onClick = { exportLauncher.launch("ai-meal-log-user-data.json") },
+                enabled = !isDataTransferInProgress,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (isDataTransferInProgress) "Working..." else "Export User Data")
+            }
+            OutlinedButton(
+                onClick = { importLauncher.launch(arrayOf("application/json", "text/*", "*/*")) },
+                enabled = !isDataTransferInProgress,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (isDataTransferInProgress) "Working..." else "Import User Data")
             }
             OutlinedButton(
                 onClick = onLogoutClick,
