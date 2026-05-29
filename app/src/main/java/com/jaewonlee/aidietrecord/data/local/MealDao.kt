@@ -18,6 +18,10 @@ interface MealDao {
     fun observeMealRecords(ownerId: Long): Flow<List<MealWithFoods>>
 
     @Transaction
+    @Query("SELECT * FROM meals WHERE ownerId = :ownerId ORDER BY createdAt DESC")
+    suspend fun getMealRecords(ownerId: Long): List<MealWithFoods>
+
+    @Transaction
     @Query("SELECT * FROM meals WHERE id = :mealId AND ownerId = :ownerId")
     suspend fun getMealRecord(mealId: Long, ownerId: Long): MealWithFoods?
 
@@ -35,4 +39,7 @@ interface MealDao {
 
     @Query("DELETE FROM meals WHERE id = :mealId")
     suspend fun deleteMeal(mealId: Long)
+
+    @Query("DELETE FROM meals WHERE ownerId = :ownerId")
+    suspend fun deleteMealsForOwner(ownerId: Long)
 }

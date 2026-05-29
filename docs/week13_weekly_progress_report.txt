@@ -5,12 +5,7 @@
 프로젝트명: AI 기반 식단 기록 관리 앱
 제출 주차: 13주차
 진행 기간: 2026.05.25 ~ 2026.05.31
-개발 환경: Kotlin, Android Studio, Jetpack Compose, Material3, Navigation Compose, Room Database, Firebase AI, Image Picker
-현재 상태: preview branch 구현 및 빌드 검증 완료, PR 검토 단계
-
-주의 사항:
-이 문서는 13주차 진행보고서 작성을 위해 미리 정리한 초안이다. 현재 구현 내용은 codex/ui-polish-preview 브랜치에서 검증한 상태이며, 제출 전에는 최종 PR 번호, 커밋 수, 커밋 해시, 커밋 히스토리 그래프, 주요 화면 스크린샷을 다시 업데이트해야 한다.
-
+개발 환경: Kotlin, Android Studio, Jetpack Compose, Material3, Navigation Compose, Room Database, Firebase Authentication, Firebase AI, Image Picker, Android Activity Result API
 
 2. 13주차 개발 목표
 
@@ -21,6 +16,7 @@
 주요 목표는 다음과 같다.
 
 - Edit Meal 화면에서 AI가 분석한 kcal 및 영양소 값을 사용자가 직접 수정 가능하게 구현
+- Edit Meal 화면에서 기존 식사 기록의 날짜와 시간을 직접 수정할 수 있도록 구현
 - 목표 설정 화면에서 현재 체중은 필수 입력, 골격근량과 체지방률은 선택 입력으로 구분
 - 목표 설정 화면에서 사용자가 원할 때 현재 몸 상태를 별도 입력할 수 있는 Body Status 입력 기능 추가
 - 인바디 측정값인 체중, 기초대사량, 골격근량, 체지방량, 체지방률을 날짜별로 저장할 수 있도록 DB 확장
@@ -31,15 +27,21 @@
 - 사용자별·시점별 목표 DB 설계 및 Room Entity, DAO, Repository 추가
 - 목표 수정 시 기존 목표 기간을 닫고 새 목표 계획을 insert하는 방식으로 목표 변경 이력 관리
 - Home 화면이 DB의 active goal을 기준으로 칼로리/탄단지/건강 지표 목표를 표시하도록 연결
+- Home 화면의 주요 정보를 별도 큰 카드에 넣지 않고 배경 위에 바로 배치하도록 UI 밀도 개선
 - Insights 화면에서 날짜별 실제 섭취량과 해당 날짜에 적용되던 목표를 라인 그래프로 비교하여 표시
 - 기존 기능, 지표, 화면 흐름은 유지하면서 앱 전체 색감과 대시보드 UI를 현대적인 피트니스/웰니스 앱 스타일로 개선
-- Home 화면의 칼로리 정보를 큰 원형 게이지 중심으로 재구성하고, 탄단지는 링/칩과 막대를 함께 사용하여 한눈에 파악 가능하게 개선
+- Home 화면의 칼로리 정보를 큰 원형 게이지 중심으로 재구성하고, 탄단지는 링/칩 중심으로 한눈에 파악 가능하게 개선
+- Nutrition 영역의 중복된 탄단지 막대그래프와 세부 progress row를 제거하여 정보 구조를 단순화
 - 목표 초과 상태를 "0 kcal left"처럼 모호하게 표시하지 않고 "Over goal by N kcal" 방식으로 명확하게 표시
 - Protein/Fat 등 영양소가 목표를 초과했을 때 +79g 같은 초과 뱃지를 표시하도록 개선
 - Fiber, Sugar, Sodium은 하나의 평면 정보 박스가 아니라 상태별 카드로 분리하여 부족/정상/초과 상태를 더 잘 드러내도록 개선
 - Insights 차트는 상단 요약 칩을 먼저 보여주고, 얇은 선/작은 점/연한 grid line을 적용하여 더 앱스러운 그래프 스타일로 개선
 - Add Meal 화면은 사진 영역을 과하게 키우지 않고 텍스트 입력과 사진 입력의 비중이 비슷하게 보이도록 조정
 - Meal Details 화면은 긴 음식명을 줄이고 음식 항목을 개별 카드로 분리하여 기록 내용을 더 쉽게 스캔할 수 있도록 개선
+- 실제 여러 사용자가 사용할 수 있도록 로컬 비밀번호 인증을 Firebase Authentication 기반 이메일 회원관리로 교체
+- 비밀번호 찾기 기능을 Firebase Password Reset Email 발송 방식으로 구현
+- Firebase UID와 Room의 로컬 사용자 row를 매핑하여 회원별 로컬 데이터를 분리 저장
+- Profile 화면에서 현재 로그인한 회원의 식단/목표/체성분 데이터를 JSON 파일 하나로 export/import할 수 있도록 구현
 
 
 3. 이번 주 현재까지 구현된 전체 기능
@@ -47,6 +49,9 @@
 현재까지 13주차용으로 구현한 기능은 다음과 같다.
 
 - Edit Meal 화면에서 음식 항목별 Calories, Carbs, Protein, Fat, Fiber, Sugar, Sodium 직접 수정 가능
+- Edit Meal 화면에서 Meal Time 섹션을 추가하여 기록 날짜와 기록 시간을 직접 수정 가능
+- 기존 식사 기록 수정 시 저장된 createdAt을 날짜/시간 입력값으로 변환하여 자동 표시
+- 저장 시 수정된 날짜/시간을 다시 epoch millisecond로 변환하여 MealUploadDraft.createdAt에 반영
 - 기존 식단 기록을 수정할 때 저장된 영양소 값이 edit 화면 입력 필드에 자동으로 채워짐
 - 사용자가 수정한 영양소 값이 MealFoodDraft로 전달되어 AI 추정값보다 우선 저장됨
 - Goal Settings 화면에 Goal Period 섹션 추가
@@ -90,14 +95,32 @@
 - Nutrition Trend에서 100% 목표 기준선과 탄수화물/단백질/지방 라인을 서로 다른 색상으로 표시
 - Room Database version 7 migration 추가 후, Body Status 확장을 위해 version 8 migration 추가
 - Home 화면에 큰 칼로리 원형 게이지, 매크로 링 카드, 건강 상태 카드를 적용하여 데이터 출력 화면보다 대시보드에 가까운 구조로 개선
+- Home 화면의 Today's Intake와 Nutrition 섹션에서 바깥 카드 배경과 테두리를 제거하여 배경 위에 직접 놓인 대시보드 형태로 조정
 - 목표 초과 시 칼로리 상태는 Over goal by N kcal, 미달 시 N kcal left로 표시되도록 변경
-- 탄수화물/단백질/지방은 차분한 색상의 progress bar를 유지하되, 초과분은 +N g 뱃지로 별도 표시
-- Fiber, Sugar, Sodium은 상태 카드로 분리하고 부족/정상/초과 상태에 따라 배경색과 강조색을 다르게 표시
+- 탄수화물/단백질/지방은 링 카드만 남기고 중복된 막대그래프와 세부 progress row를 제거
+- Fiber, Sugar, Sodium은 탄수화물/단백질/지방 박스와 같은 크기, 배경, 테두리 느낌으로 맞추되 원형 게이지 없이 텍스트 상태 표시를 유지
 - Insights의 Calorie Trend와 Nutrition Trend는 상단 summary chip, 얇은 라인, 작은 데이터 포인트, compact legend를 사용하도록 디자인 개선
 - Goals의 Daily Targets는 긴 문장형 텍스트 대신 Calories, Carbs, Protein, Fat, Fiber, Sugar, Sodium 카드로 재배치
 - Add Meal의 scan/photo area는 compact placeholder로 유지하고, Meal Description 입력 영역과 비슷한 시각적 비중이 되도록 조정
 - Meal Details의 meal summary, nutrition summary, food items를 카드 기반으로 정리하고 각 음식별 kcal 및 탄단지 정보를 칩 형태로 표시
 - 사진이 없는 Meal Details 기록은 큰 빈 이미지 영역 대신 작은 No photo placeholder를 사용하여 음식 카드가 더 빨리 보이도록 개선
+- Firebase Authentication SDK를 추가하여 이메일/비밀번호 기반 회원가입과 로그인을 구현
+- 기존 로컬 SHA-256 비밀번호 비교 방식은 제거하고 FirebaseAuth.signInWithEmailAndPassword, createUserWithEmailAndPassword 흐름으로 변경
+- 앱 실행 시 SharedPreferences의 로컬 user id만 신뢰하지 않고 FirebaseAuth.currentUser를 기준으로 로그인 세션 복원
+- Firebase UID가 있는 경우 UserAccount.firebaseUid로 로컬 사용자 row를 찾고, 기존 로컬 계정이 이메일과 일치하면 해당 계정을 Firebase UID에 연결
+- 로그인 화면에서 Login ID 입력을 Email 입력으로 변경하고 이메일 형식 검증 추가
+- 로그인 화면에 Forgot Password 버튼을 추가하여 비밀번호 재설정 메일 발송 가능
+- Profile 화면에서도 Send Password Reset Email 버튼을 제공하여 로그인 후에도 재설정 메일 발송 가능
+- Profile 화면에서 닉네임, 이메일, 새 비밀번호 변경 시 Firebase Auth 프로필과 로컬 UserAccount 정보를 함께 갱신
+- 로그아웃 시 FirebaseAuth.signOut()을 호출하고 로컬 세션 상태를 초기화
+- Profile 화면에 Export User Data 버튼 추가
+- Profile 화면에 Import User Data 버튼 추가
+- export 시 현재 로그인한 회원의 meals, meal_foods, goal_plans, body_measurements 데이터를 하나의 JSON 파일로 저장
+- import 시 선택한 JSON 파일의 데이터를 현재 로그인한 회원의 Room 데이터로 복원
+- import는 현재 회원의 기존 식단/목표/체성분 데이터를 삭제한 뒤 백업 파일 내용을 새 local id 기준으로 다시 insert하는 방식으로 구현
+- UserDataPortabilityRepository를 추가하여 export/import 변환 로직을 UI와 분리
+- Room Database version 9 migration을 추가하여 user_accounts에 firebaseUid 컬럼 및 unique index 추가
+- Firebase Authentication 구조와 로컬 데이터 export/import 구조를 README에 반영
 - Android Studio에 포함된 JBR을 JAVA_HOME으로 지정하여 assembleDebug 빌드 성공 확인
 
 
@@ -105,7 +128,7 @@
 
 4.1 Edit Meal 화면
 
-12주차에는 식단 상세 화면에서 editMeal route로 이동하고, AddMealScreen을 재사용하여 음식명, 설명, 이미지 URI를 수정할 수 있었다. 13주차에는 여기서 더 나아가 AI가 계산한 kcal 및 각종 nutrition 값을 사용자가 직접 수정할 수 있도록 변경하였다.
+12주차에는 식단 상세 화면에서 editMeal route로 이동하고, AddMealScreen을 재사용하여 음식명, 설명, 이미지 URI를 수정할 수 있었다. 13주차에는 여기서 더 나아가 AI가 계산한 kcal 및 각종 nutrition 값을 사용자가 직접 수정할 수 있도록 변경하였다. 추가로 식사 기록의 날짜와 시간이 잘못 저장되었거나 나중에 입력한 기록을 실제 식사 시점으로 맞출 수 있도록, Edit Meal 화면에서 Meal Time을 직접 수정하는 기능도 구현하였다.
 
 구현 기술:
 - AddMealScreen의 FoodDraftUiState에 calories, carbsGram, proteinGram, fatGram, fiberGram, sugarGram, sodiumMilligram 상태 추가
@@ -113,8 +136,15 @@
 - edit 모드일 때만 Nutrition Details 영역 표시
 - 숫자 키보드와 숫자 입력 필터를 적용하여 잘못된 문자 입력 방지
 - FoodDraftUiState.toMealFoodDraft()에서 사용자가 입력한 값을 nullable Int로 변환
+- edit 모드에서 Meal Time 카드 표시
+- initialMeal.createdAt을 yyyy.MM.dd 날짜 문자열과 HH:mm 시간 문자열로 변환하여 기본 입력값으로 표시
+- 날짜 입력은 yyyy.MM.dd 형식을 기본으로 하되 yyyy-MM-dd, yyyy/MM/dd 입력도 저장 시 처리
+- 시간 입력은 HH:mm 형식을 기본으로 하고 930, 1330처럼 숫자만 입력한 경우도 저장 시 H:mm 또는 HH:mm으로 해석
+- 저장 전 LocalDateTime을 ZoneId.systemDefault 기준 epoch millisecond로 변환하여 MealUploadDraft.createdAt에 저장
 
 구현된 내용:
+- 식사 기록 날짜 직접 수정
+- 식사 기록 시간 직접 수정
 - Calories (kcal) 직접 수정
 - Carbs (g) 직접 수정
 - Protein (g) 직접 수정
@@ -125,6 +155,8 @@
 
 문제 해결 과정:
 AI 분석 결과는 추정값이기 때문에 사용자가 실제 음식량이나 포장지 영양성분표를 알고 있을 때 직접 수정할 수 있어야 한다. 기존 구조에서는 MealFoodDraft에 영양소 nullable 값이 이미 존재했고 MealReviewRepository에서 draft 값이 있으면 AI 분석값보다 우선 사용하고 있었다. 따라서 데이터 흐름을 새로 만들기보다는 edit 화면에서 해당 값들을 입력할 수 있도록 UI 상태만 확장하여 기존 저장 흐름을 재사용하였다.
+
+날짜와 시간도 별도의 DB 스키마 변경 없이 기존 MealRecord.createdAt 필드를 그대로 재사용하였다. Edit Meal 화면에서는 createdAt을 사람이 읽고 수정할 수 있는 날짜/시간 문자열로 보여주고, 저장 버튼을 누를 때 다시 epoch millisecond로 변환한다. 이렇게 하면 Meal Details의 Logged at 표시, Meal List 정렬, Home의 Today 필터가 모두 수정된 식사 시점을 기준으로 동작한다.
 
 
 4.2 Goal Settings 화면
@@ -368,7 +400,7 @@ Insights 화면은 12주차에는 최근 식단 기록의 평균과 경향을 �
 - Color.kt의 앱 전역 색상 토큰을 민트 중심의 warm neutral palette로 재정의
 - HomeScreen에 Canvas 기반 CalorieGauge 컴포저블 추가
 - HomeScreen에 MiniProgressRing, MacroRingChip, HealthStatusCard, StatusPill 컴포저블 추가
-- 탄단지 목표 초과 여부를 계산하여 progress bar 옆에 초과 뱃지를 표시
+- 탄단지 목표 초과 여부를 계산하여 macro ring chip 안에 초과 뱃지를 표시
 - RecentStatsScreen의 Canvas chart line 두께와 point radius, grid line alpha 조정
 - ChartSummaryChip과 compact ChartLegend를 사용하여 차트 카드 상단에 핵심 수치를 먼저 배치
 - GoalSettingsScreen의 Daily Targets를 GoalMetricCard 기반 card grid로 변경
@@ -378,12 +410,15 @@ Insights 화면은 12주차에는 최근 식단 기록의 평균과 경향을 �
 
 구현된 내용:
 - Home의 Today's Intake는 큰 원형 게이지와 상태 문구를 중심으로 재구성
+- Today's Intake와 Nutrition 섹션의 바깥 카드 배경/테두리를 제거하여 화면 배경에 바로 배치
 - 목표보다 적게 먹은 경우 N kcal left로 표시
 - 목표를 초과한 경우 Over goal by N kcal로 표시하여 "0 kcal left"보다 명확하게 개선
-- Nutrition 카드 상단에 Carbs, Protein, Fat 링 칩 추가
-- 기존 탄단지 막대 3개는 유지하되 원색을 줄이고 차분한 macro color로 변경
-- Protein 또는 Fat이 목표를 초과하면 단순히 막대가 꽉 찬 상태로 끝나지 않고 +N g 초과 뱃지 표시
+- Nutrition 영역에 Carbs, Protein, Fat 링 칩 추가
+- 중복 정보였던 탄단지 막대그래프와 Carbs/Protein/Fat 세부 progress row 제거
+- Protein 또는 Fat이 목표를 초과하면 macro ring chip 안에 +N g 초과 뱃지 표시
 - Fiber, Sugar, Sodium은 한 박스 안에 나열하지 않고 각각의 상태 카드로 분리
+- Fiber, Sugar, Sodium 박스의 크기, 배경색, 테두리 스타일을 Carbs/Protein/Fat 링 칩과 같은 UI 느낌으로 통일
+- Fiber, Sugar, Sodium은 원형 게이지를 추가하지 않고 기존 텍스트 상태 표시 유지
 - Fiber는 Low/Good, Sugar와 Sodium은 OK/High 상태를 표시
 - Insights의 Calorie Trend는 Latest, Goal, Left/Over summary chip을 먼저 보여준 뒤 차트를 표시
 - Insights의 Nutrition Trend는 Carbs, Protein, Fat 최신값 summary chip을 먼저 보여준 뒤 차트를 표시
@@ -398,29 +433,80 @@ Insights 화면은 12주차에는 최근 식단 기록의 평균과 경향을 �
 문제 해결 과정:
 기존 Home 화면은 숫자와 progress bar가 위에서 아래로 나열되어 있어 사용자가 오늘 상태를 빠르게 해석하기 어려웠다. 칼로리는 앱의 가장 중요한 지표이므로 큰 원형 게이지로 시각적 우선순위를 높였고, 남은 칼로리 또는 초과 칼로리를 별도 상태 문구와 pill로 분리하였다. 특히 목표 초과 상황에서 0 kcal left로 표시하면 실제로 얼마나 초과했는지 알 수 없기 때문에 Over goal by N kcal 문구로 변경하였다.
 
-탄단지는 기존 막대 구조를 완전히 버리지 않고 유지하였다. 대신 상단에는 작은 링 칩을 추가하여 요약 정보를 먼저 보여주고, 아래 막대에서는 목표 대비 진행률을 더 자세히 확인할 수 있게 하였다. 목표를 넘은 영양소는 막대가 100%에서 멈추는 것만으로는 초과 상태가 드러나지 않으므로 +N g 뱃지를 추가하였다.
+탄단지는 처음에는 링 칩과 막대그래프를 함께 사용했지만, 같은 정보가 두 번 반복되어 Nutrition 영역이 복잡해 보이는 문제가 있었다. 최종적으로는 Carbs, Protein, Fat 링 칩만 남기고 중복된 막대그래프와 세부 progress row를 제거하였다. 이로 인해 Nutrition 영역은 핵심 수치와 목표 상태를 더 빠르게 스캔할 수 있는 구조가 되었다. 목표를 넘은 영양소는 링 칩 내부의 +N g 뱃지로 초과 상태를 드러내도록 유지하였다.
+
+Fiber, Sugar, Sodium은 처음에는 상태별 배경색을 가진 별도 카드였지만, Carbs/Protein/Fat 박스와 시각적 무게가 달라 한 화면 안에서 서로 다른 컴포넌트처럼 보였다. 이를 해결하기 위해 세 박스의 배경, 테두리, 최소 높이를 macro ring chip과 같은 규격으로 맞추었다. 다만 건강 지표는 탄단지처럼 목표 달성률을 원형 게이지로 보여주기보다 Low/Good 또는 OK/High 상태 텍스트가 더 직접적이므로, 기존 텍스트 표시 방식은 유지하였다.
 
 Insights 화면의 차트는 기능적으로는 동작했지만 시각적으로 무겁고 앱스러운 느낌이 부족했다. 그래서 축과 라벨을 최소화하고, 카드 상단에 Latest/Goal/Left 같은 요약값을 먼저 제공한 뒤 차트를 보여주는 구조로 바꾸었다. 라인 두께와 점 크기, grid line opacity도 줄여 화면이 덜 거칠고 더 정돈되어 보이도록 조정하였다.
 
 Meal Details는 음식 이름과 영양소 텍스트가 길게 이어져 화면이 무거워 보였다. 이를 해결하기 위해 meal summary와 food item을 분리하고, food item은 각 음식별 카드로 구성하였다. 사진이 없는 기록에서 큰 빈 이미지 placeholder가 첫 화면을 많이 차지하던 문제도 줄여, 사용자가 실제 기록 내용인 음식 카드에 더 빨리 도달할 수 있게 하였다.
 
 
+4.9 Firebase 회원관리 및 로컬 데이터 백업/복원
+
+13주차 추가 구현 과정에서 기존 로컬 계정 인증 방식을 실제 여러 사용자가 사용할 수 있는 Firebase Authentication 기반 회원관리로 변경하였다. 다만 식단, 목표, 체성분 데이터는 서버 DB에 올리지 않고 기존 방향대로 기기 내부 Room DB에 저장한다. Firebase는 사용자의 신원 확인과 비밀번호 재설정만 담당하고, 앱의 개인 건강 데이터는 Firebase UID와 매핑된 로컬 사용자 ID 기준으로 분리한다.
+
+구현 기술:
+- Firebase BoM에 firebase-auth 의존성 추가
+- AuthRepository에서 FirebaseAuth.getInstance()를 사용하여 회원가입, 로그인, 로그아웃, 비밀번호 재설정 메일 발송 구현
+- Firebase Task API를 suspend 함수에서 사용할 수 있도록 await helper 추가
+- UserAccount에 firebaseUid 필드 추가
+- AuthDao에 getUserByFirebaseUid(firebaseUid) 추가
+- 앱 실행 시 AuthRepository.getSignedInUser()로 Firebase 세션을 확인하고 로컬 UserAccount와 동기화
+- AIDietNavHost의 로그인 복원 기준을 기존 SharedPreferences user id 중심에서 FirebaseAuth.currentUser 중심으로 변경
+- ProfileScreen에서 ActivityResultContracts.CreateDocument와 OpenDocument를 사용하여 JSON 파일 저장/선택 구현
+- UserDataPortabilityRepository에서 Room 데이터를 JSON으로 변환하고, JSON 파일을 다시 Room Entity로 복원
+
+구현된 내용:
+- 이메일/비밀번호 기반 회원가입
+- 이메일/비밀번호 기반 로그인
+- Firebase 세션을 이용한 자동 로그인 복원
+- FirebaseAuth.signOut()을 이용한 로그아웃
+- Firebase sendPasswordResetEmail을 이용한 비밀번호 찾기
+- 로그인 화면의 Forgot Password 버튼
+- Profile 화면의 Send Password Reset Email 버튼
+- Profile 화면의 Export User Data 버튼
+- Profile 화면의 Import User Data 버튼
+- export 파일에는 format, schemaVersion, exportedAt, user, meals, goalPlans, bodyMeasurements 포함
+- meals export 시 한 끼 식단 정보와 해당 식단의 음식별 영양소 정보를 함께 저장
+- goalPlans export 시 목표 기간, 목표 체성분, 일일 영양 목표, planSummary, plannerVersion 저장
+- bodyMeasurements export 시 측정일, 체중, 골격근량, 기초대사량, 체지방량, 체지방률 저장
+- import 시 백업 파일의 ownerId를 그대로 사용하지 않고 현재 로그인한 회원의 local ownerId로 다시 매핑
+- import 시 기존 로컬 데이터와 백업 데이터가 섞이지 않도록 현재 회원의 meals, goal_plans, body_measurements를 먼저 삭제 후 복원
+
+문제 해결 과정:
+처음 구현된 로그인은 Room의 user_accounts 테이블에 로그인 ID와 비밀번호 해시를 저장하고, 앱 내부에서 SHA-256 값을 비교하는 방식이었다. 이 방식은 과제 초기 단계나 단일 기기 테스트에는 충분하지만, 실제 여러 사용자가 사용할 경우 계정 생성, 비밀번호 찾기, 기기 변경, 보안 관리 측면에서 한계가 있다. 이를 해결하기 위해 회원 인증은 Firebase Authentication에 맡기고, 앱의 식단/신체 데이터는 기존 Room DB에 유지하는 하이브리드 구조로 변경하였다.
+
+Firebase Auth의 uid는 문자열이고 기존 Room 데이터의 ownerId는 Long 타입 local id를 사용하고 있었다. 전체 식단/목표 테이블의 ownerId 타입을 즉시 String으로 바꾸면 수정 범위가 커지기 때문에, UserAccount에 firebaseUid를 추가하여 "Firebase 계정 1개 = 로컬 UserAccount row 1개"로 매핑하는 방식을 선택하였다. 이렇게 하면 기존 MealEntity, GoalPlanEntity, BodyMeasurementEntity의 ownerId 구조를 유지하면서도 Firebase 계정별 데이터 분리가 가능하다.
+
+사용자 데이터는 서버에 저장하지 않기로 했기 때문에 기기 변경이나 앱 재설치 시 데이터 이동 방법이 필요했다. 이를 위해 Profile 화면에 export/import 기능을 추가하였다. export는 현재 로그인한 회원의 Room 데이터를 JSON 파일 하나로 저장하고, import는 해당 JSON 파일을 다시 현재 회원의 로컬 데이터로 복원한다. 이때 백업 파일에 들어 있던 과거 ownerId를 그대로 사용하면 다른 회원 데이터와 충돌할 수 있으므로, import 과정에서 모든 row를 현재 로그인한 회원의 ownerId로 다시 매핑한다.
+
+현재 export/import는 텍스트 기반 데이터 백업을 목표로 한다. 이미지 파일 자체를 JSON 안에 넣지는 않고 기존 imageUri 문자열만 저장한다. 따라서 같은 기기에서는 기존 URI 권한이 유지되는 한 이미지를 다시 볼 수 있지만, 다른 기기로 파일을 옮길 경우 사진 파일까지 완전히 복원하려면 이후 ZIP 백업 또는 이미지 base64 포함 방식으로 확장할 필요가 있다.
+
+
 5. 데이터베이스 변경 사항
 
-Room Database version을 6에서 7로 올리고 MIGRATION_6_7을 추가하였다. 이후 Body Status 입력 기능에서 기초대사량과 체지방량을 별도로 저장할 필요가 생겨 version을 8로 올리고 MIGRATION_7_8을 추가하였다.
+Room Database version을 6에서 7로 올리고 MIGRATION_6_7을 추가하였다. 이후 Body Status 입력 기능에서 기초대사량과 체지방량을 별도로 저장할 필요가 생겨 version을 8로 올리고 MIGRATION_7_8을 추가하였다. Firebase Authentication과 로컬 사용자 row를 연결하기 위해 version을 9로 올리고 MIGRATION_8_9를 추가하였다.
 
 추가된 테이블:
 - goal_plans
 - body_measurements
 
 추가된 DAO:
+- AuthDao.getUserByFirebaseUid(firebaseUid)
 - GoalDao.observeBodyMeasurements(ownerId)
+- GoalDao.getBodyMeasurements(ownerId)
 - GoalDao.observeGoalPlans(ownerId)
+- GoalDao.getGoalPlans(ownerId)
 - GoalDao.observeActiveGoalPlan(ownerId, epochDay)
 - GoalDao.closeOverlappingGoalPlans(ownerId, newValidToEpochDay)
 - GoalDao.deleteGoalPlansStartingAtOrAfter(ownerId, fromEpochDay)
 - GoalDao.insertGoalPlan(goalPlan)
 - GoalDao.insertBodyMeasurement(bodyMeasurement)
+- GoalDao.deleteGoalPlansForOwner(ownerId)
+- GoalDao.deleteBodyMeasurementsForOwner(ownerId)
+- MealDao.getMealRecords(ownerId)
+- MealDao.deleteMealsForOwner(ownerId)
 
 추가된 Repository:
 - GoalRepository.observeBodyMeasurements(ownerId)
@@ -428,11 +514,15 @@ Room Database version을 6에서 7로 올리고 MIGRATION_6_7을 추가하였다
 - GoalRepository.observeActiveGoalPlan(ownerId, epochDay)
 - GoalRepository.saveBodyMeasurement(ownerId, draft)
 - GoalRepository.saveGoalPlan(ownerId, draft)
+- UserDataPortabilityRepository.exportUserData(userAccount, outputStream)
+- UserDataPortabilityRepository.importUserData(ownerId, inputStream)
 
 Migration 변경:
 - MIGRATION_6_7: goal_plans, body_measurements 테이블 최초 추가
 - MIGRATION_7_8: body_measurements의 weightKg를 nullable로 변경하고 basalMetabolicRateKcal, bodyFatMassKg 필드 추가
 - 기존 body_measurements 데이터를 body_measurements_new로 복사한 뒤 테이블을 교체하여 기존 측정 기록 보존
+- MIGRATION_8_9: user_accounts에 firebaseUid TEXT 컬럼 추가
+- MIGRATION_8_9: index_user_accounts_firebaseUid unique index 추가
 
 
 6. 검증 결과
@@ -456,22 +546,24 @@ The operation couldn't be completed. Unable to locate a Java Runtime.
 - Add Meal 단일 입력 화면, Home 분석 상태 카드, Review Meal 확인 흐름 추가 후 ./gradlew test 성공
 - Insights Body Progress 목록 접기/펼치기 기능 추가 후 ./gradlew test 성공
 - Home, Add Meal, Insights, Goals, Meal Details UI 디자인 리팩토링 후 :app:assembleDebug 성공
+- Firebase Authentication 회원가입/로그인/비밀번호 재설정 코드 추가 후 :app:assembleDebug 성공
+- UserDataPortabilityRepository와 Profile export/import 버튼 추가 후 :app:assembleDebug 성공
 - 디버그 APK를 Android emulator에 설치한 뒤 Home, Add Meal, Insights, Goals, Meal Details 화면을 직접 이동하며 시각 검증
 - Add Meal 화면에서 photo area가 과하게 커지지 않고 Meal Description 입력 영역과 비슷한 비중으로 보이는지 확인
 - Meal Details 화면에서 사진이 없는 기록의 placeholder 높이가 줄어들고, 음식별 카드가 첫 화면에 노출되는지 확인
+- Home 화면 카드 배경 제거, Nutrition 막대그래프 제거, health metric box 규격 통일 후 :app:compileDebugKotlin 성공
+- Edit Meal 날짜/시간 수정 기능 추가 후 :app:compileDebugKotlin 성공
 
 
 7. 현재 한계 및 다음 작업
 
 현재까지 구현된 13주차 기능은 목표 설정과 목표 대비 식단 분석 구조를 안정화하는 데 집중되어 있다. 아직 다음 작업이 남아 있다.
 
-- Review Meal 화면에서 AI 분석 결과를 사용자가 직접 수정할 수 있는 편집 기능 추가
 - pending meal review 상태를 현재 메모리에서 관리하고 있으므로 앱 종료 후에도 유지하려면 Room 기반 pending 테이블 추가
-- Home 화면의 분석 상태 카드 UI 세부 조정
-- 저장된 body_measurements를 별도 Body History 화면으로 보여주기
 - 체중/골격근/체지방률/기초대사량 추세를 더 자세히 볼 수 있는 별도 상세 그래프 화면 추가
-- Insights 라인 그래프에 축 라벨, 값 라벨, 터치 시 상세값 표시 같은 추가 인터랙션 구현
 - 실제 사진 입력 케이스에서 Gemini의 음식 분리 정확도 수동 검증
+- export/import는 현재 JSON 텍스트 데이터 중심이므로, 다른 기기 이동 시 사진까지 완전히 복원하려면 이미지 파일 포함 백업 방식 추가 필요
+- import 시 기존 데이터를 교체하므로, 병합 import 또는 import 전 확인 다이얼로그 추가 필요
 - UI 리팩토링 후 실제 사용자 피드백을 받아 색상 대비, 카드 밀도, chart summary 문구를 추가 조정
 - 13주차 최종 제출 전 커밋 수와 커밋 히스토리 그래프 업데이트
 - 주요 화면 스크린샷 캡처 및 보고서 첨부
@@ -480,6 +572,7 @@ The operation couldn't be completed. Unable to locate a Java Runtime.
 8. 13주차 보고서에 포함하면 좋은 스크린샷
 
 - Edit Meal 화면의 Nutrition Details 입력 영역
+- Edit Meal 화면의 Meal Time 날짜/시간 입력 영역
 - Goal Settings의 Goal Period Target Date 모드
 - Goal Settings의 Duration 모드
 - AI Nutrition Plan 카드
@@ -493,7 +586,7 @@ The operation couldn't be completed. Unable to locate a Java Runtime.
 - Insights의 Calorie Trend 라인 그래프
 - Insights의 Nutrition Trend 라인 그래프
 - Insights의 Body Progress 그래프와 Show all / Show less 버튼
-- Home 화면의 큰 칼로리 원형 게이지와 Nutrition 링/상태 카드
+- Home 화면의 큰 칼로리 원형 게이지와 배경에 바로 배치된 Nutrition 링/상태 박스
 - Home 화면에서 목표 초과 시 Over goal by N kcal 문구가 표시되는 상태
 - Add Meal 화면의 compact photo area와 Meal Description 입력 영역
 - Goals 화면의 Daily Targets 카드 grid
@@ -502,4 +595,10 @@ The operation couldn't be completed. Unable to locate a Java Runtime.
 - Home 화면의 AI is analyzing your meal 상태 카드
 - Home 화면의 Meal analysis ready 카드
 - Review Meal 화면의 Detected Foods 및 Confirm Meal 버튼
+- Login 화면의 Email 로그인 및 Forgot Password 버튼
+- Firebase 회원가입 화면
+- Profile 화면의 Send Password Reset Email 버튼
+- Profile 화면의 Export User Data / Import User Data 버튼
+- Android 파일 저장 화면에서 ai-meal-log-user-data.json을 생성하는 장면
+- JSON 백업 파일 import 후 식단/목표/체성분 기록이 복원된 화면
 - GitHub 커밋 히스토리 그래프

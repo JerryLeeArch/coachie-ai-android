@@ -21,12 +21,30 @@ interface GoalDao {
 
     @Query(
         """
+        SELECT * FROM body_measurements
+        WHERE ownerId = :ownerId
+        ORDER BY measuredEpochDay DESC, createdAt DESC
+        """
+    )
+    suspend fun getBodyMeasurements(ownerId: Long): List<BodyMeasurementEntity>
+
+    @Query(
+        """
         SELECT * FROM goal_plans
         WHERE ownerId = :ownerId
         ORDER BY validFromEpochDay DESC, createdAt DESC
         """
     )
     fun observeGoalPlans(ownerId: Long): Flow<List<GoalPlanEntity>>
+
+    @Query(
+        """
+        SELECT * FROM goal_plans
+        WHERE ownerId = :ownerId
+        ORDER BY validFromEpochDay DESC, createdAt DESC
+        """
+    )
+    suspend fun getGoalPlans(ownerId: Long): List<GoalPlanEntity>
 
     @Query(
         """
@@ -65,4 +83,10 @@ interface GoalDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBodyMeasurement(bodyMeasurement: BodyMeasurementEntity): Long
+
+    @Query("DELETE FROM goal_plans WHERE ownerId = :ownerId")
+    suspend fun deleteGoalPlansForOwner(ownerId: Long)
+
+    @Query("DELETE FROM body_measurements WHERE ownerId = :ownerId")
+    suspend fun deleteBodyMeasurementsForOwner(ownerId: Long)
 }

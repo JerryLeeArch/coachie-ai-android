@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -35,7 +35,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
@@ -57,7 +56,6 @@ import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceTonal
 import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.theme.AppTextPrimary
 import com.jaewonlee.aidietrecord.ui.theme.AppWarning
-import com.jaewonlee.aidietrecord.ui.theme.AppWarningSoft
 import com.jaewonlee.aidietrecord.ui.theme.MacroCarb
 import com.jaewonlee.aidietrecord.ui.theme.MacroFat
 import com.jaewonlee.aidietrecord.ui.theme.MacroFiber
@@ -325,7 +323,6 @@ private fun CalorieHero(
     progress: Float,
     onMealListClick: () -> Unit
 ) {
-    val cardShape = RoundedCornerShape(8.dp)
     val isOverGoal = calorieDelta < 0
     val statusText = if (isOverGoal) {
         "Over goal by ${-calorieDelta} kcal"
@@ -337,9 +334,7 @@ private fun CalorieHero(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(CardSurface, cardShape)
-            .border(1.dp, AppOutline, cardShape)
-            .padding(20.dp),
+            .padding(vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Row(
@@ -486,14 +481,9 @@ private fun NutritionPanel(
     targetSugarGram: Int,
     targetSodiumMilligram: Int
 ) {
-    val cardShape = RoundedCornerShape(8.dp)
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(CardSurface, cardShape)
-            .border(1.dp, AppOutline, cardShape)
-            .padding(22.dp),
-        verticalArrangement = Arrangement.spacedBy(15.dp)
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
             text = "Nutrition",
@@ -529,16 +519,6 @@ private fun NutritionPanel(
             )
         }
 
-        MacroSegmentBar(
-            carbsGram = carbsGram,
-            proteinGram = proteinGram,
-            fatGram = fatGram
-        )
-
-        NutritionTargetRow("Carbs", carbsGram, targetCarbsGram, "g", CarbColor)
-        NutritionTargetRow("Protein", proteinGram, targetProteinGram, "g", ProteinColor)
-        NutritionTargetRow("Fat", fatGram, targetFatGram, "g", FatColor)
-
         HorizontalDivider(color = AppOutline)
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -549,7 +529,7 @@ private fun NutritionPanel(
                 unit = "g",
                 status = if (fiberGram >= targetFiberGram) "Good" else "Low",
                 color = FiberColor,
-                containerColor = if (fiberGram >= targetFiberGram) AppSuccessSoft else AppWarningSoft,
+                statusColor = if (fiberGram >= targetFiberGram) AppSuccess else AppWarning,
                 modifier = Modifier.weight(1f)
             )
             HealthStatusCard(
@@ -559,7 +539,7 @@ private fun NutritionPanel(
                 unit = "g",
                 status = if (sugarGram > targetSugarGram) "High" else "OK",
                 color = SugarColor,
-                containerColor = if (sugarGram > targetSugarGram) AppDangerSoft else AppSuccessSoft,
+                statusColor = if (sugarGram > targetSugarGram) AppDanger else AppSuccess,
                 modifier = Modifier.weight(1f)
             )
             HealthStatusCard(
@@ -569,7 +549,7 @@ private fun NutritionPanel(
                 unit = "mg",
                 status = if (sodiumMilligram > targetSodiumMilligram) "High" else "OK",
                 color = SodiumColor,
-                containerColor = if (sodiumMilligram > targetSodiumMilligram) AppWarningSoft else AppSuccessSoft,
+                statusColor = if (sodiumMilligram > targetSodiumMilligram) AppWarning else AppSuccess,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -592,6 +572,7 @@ private fun MacroRingChip(
         modifier = modifier
             .background(AppSurfaceSoft, RoundedCornerShape(8.dp))
             .border(1.dp, AppOutline, RoundedCornerShape(8.dp))
+            .heightIn(min = 112.dp)
             .padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -664,121 +645,6 @@ private fun MiniProgressRing(
 }
 
 @Composable
-private fun MacroSegmentBar(
-    carbsGram: Int,
-    proteinGram: Int,
-    fatGram: Int
-) {
-    val carbCalories = carbsGram * 4
-    val proteinCalories = proteinGram * 4
-    val fatCalories = fatGram * 9
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(10.dp)
-            .clip(RoundedCornerShape(50))
-            .background(TrackColor)
-    ) {
-        if (carbCalories > 0) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .weight(carbCalories.toFloat())
-                    .background(CarbColor)
-            )
-        }
-        if (proteinCalories > 0) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .weight(proteinCalories.toFloat())
-                    .background(ProteinColor)
-            )
-        }
-        if (fatCalories > 0) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .weight(fatCalories.toFloat())
-                    .background(FatColor)
-            )
-        }
-    }
-}
-
-@Composable
-private fun NutritionTargetRow(
-    label: String,
-    value: Int,
-    target: Int,
-    unit: String,
-    color: Color
-) {
-    val progress = (value / target.toFloat()).coerceIn(0f, 1f)
-    val overAmount = (value - target).coerceAtLeast(0)
-
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextPrimary
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (overAmount > 0) {
-                    StatusPill(
-                        text = "+$overAmount$unit",
-                        color = AppDanger,
-                        containerColor = AppDangerSoft
-                    )
-                }
-                Text(
-                    text = "$value$unit / $target$unit",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimary
-                )
-            }
-        }
-        RoundedProgressBar(
-            progress = progress,
-            color = color,
-            modifier = Modifier.height(8.dp)
-        )
-    }
-}
-
-@Composable
-private fun RoundedProgressBar(
-    progress: Float,
-    color: Color,
-    modifier: Modifier = Modifier
-) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(50))
-            .background(TrackColor)
-    ) {
-        if (progress > 0f) {
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth(progress)
-                    .background(color)
-            )
-        }
-    }
-}
-
-@Composable
 private fun HealthStatusCard(
     label: String,
     value: Int,
@@ -786,14 +652,15 @@ private fun HealthStatusCard(
     unit: String,
     status: String,
     color: Color,
-    containerColor: Color,
+    statusColor: Color,
     modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
-            .background(containerColor, RoundedCornerShape(8.dp))
-            .border(1.dp, color.copy(alpha = 0.18f), RoundedCornerShape(8.dp))
-            .padding(11.dp),
+            .background(AppSurfaceSoft, RoundedCornerShape(8.dp))
+            .border(1.dp, AppOutline, RoundedCornerShape(8.dp))
+            .heightIn(min = 112.dp)
+            .padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(
@@ -814,14 +681,14 @@ private fun HealthStatusCard(
         }
         Text(
             text = "$value$unit",
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             color = TextPrimary
         )
         Text(
             text = "$status · $target$unit",
             style = MaterialTheme.typography.labelSmall,
-            color = color
+            color = statusColor
         )
     }
 }

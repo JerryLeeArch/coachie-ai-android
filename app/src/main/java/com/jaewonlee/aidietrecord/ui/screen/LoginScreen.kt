@@ -1,5 +1,6 @@
 package com.jaewonlee.aidietrecord.ui.screen
 
+import android.util.Patterns
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,16 +32,21 @@ import com.jaewonlee.aidietrecord.ui.theme.AppSurface
 @Composable
 fun LoginScreen(
     errorMessage: String?,
+    infoMessage: String?,
     onLoginClick: (String, String) -> Unit,
-    onRegisterClick: (String, String, String) -> Unit
+    onRegisterClick: (String, String, String) -> Unit,
+    onPasswordResetClick: (String) -> Unit
 ) {
     var isRegisterMode by rememberSaveable { mutableStateOf(false) }
     var userId by rememberSaveable { mutableStateOf("") }
     var nickname by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var localErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
-    var hideRemoteError by rememberSaveable { mutableStateOf(false) }
-    val visibleErrorMessage = localErrorMessage ?: errorMessage.takeUnless { hideRemoteError }
+    var hideRemoteMessage by rememberSaveable { mutableStateOf(false) }
+    val visibleErrorMessage = localErrorMessage ?: errorMessage.takeUnless { hideRemoteMessage }
+    val visibleInfoMessage = infoMessage
+        .takeUnless { hideRemoteMessage }
+        ?.takeIf { visibleErrorMessage == null }
 
     ScreenScaffold(title = "AI Meal Log") { innerPadding ->
         Column(
@@ -67,9 +74,9 @@ fun LoginScreen(
                     )
                     Text(
                         text = if (isRegisterMode) {
-                            "Create a local account and start tracking meals."
+                            "Create an account. Your meal data stays on this device."
                         } else {
-                            "Enter your login ID and password."
+                            "Enter your email and password."
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -79,9 +86,9 @@ fun LoginScreen(
                         onValueChange = {
                             userId = it
                             localErrorMessage = null
-                            hideRemoteError = true
+                            hideRemoteMessage = true
                         },
-                        label = { Text("Login ID") },
+                        label = { Text("Email") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -91,7 +98,7 @@ fun LoginScreen(
                             onValueChange = {
                                 nickname = it
                                 localErrorMessage = null
-                                hideRemoteError = true
+                                hideRemoteMessage = true
                             },
                             label = { Text("Nickname") },
                             singleLine = true,
@@ -103,7 +110,7 @@ fun LoginScreen(
                         onValueChange = {
                             password = it
                             localErrorMessage = null
-                            hideRemoteError = true
+                            hideRemoteMessage = true
                         },
                         label = { Text("Password") },
                         singleLine = true,
@@ -117,6 +124,13 @@ fun LoginScreen(
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
+                    if (visibleInfoMessage != null) {
+                        Text(
+                            text = visibleInfoMessage,
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
                     Button(
                         onClick = {
                             localErrorMessage = validateAuthInput(
@@ -126,7 +140,7 @@ fun LoginScreen(
                                 isRegisterMode = isRegisterMode
                             )
                             if (localErrorMessage == null) {
-                                hideRemoteError = false
+                                hideRemoteMessage = false
                                 if (isRegisterMode) {
                                     onRegisterClick(userId, nickname, password)
                                 } else {
@@ -146,11 +160,25 @@ fun LoginScreen(
                             onClick = {
                                 isRegisterMode = !isRegisterMode
                                 localErrorMessage = null
-                                hideRemoteError = true
+                                hideRemoteMessage = true
                             },
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(if (isRegisterMode) "Back to Log In" else "Create Account")
+                        }
+                    }
+                    if (!isRegisterMode) {
+                        TextButton(
+                            onClick = {
+                                localErrorMessage = validatePasswordResetInput(userId)
+                                if (localErrorMessage == null) {
+                                    hideRemoteMessage = false
+                                    onPasswordResetClick(userId)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Forgot Password?")
                         }
                     }
                 }
@@ -166,10 +194,23 @@ private fun validateAuthInput(
     isRegisterMode: Boolean
 ): String? {
     return when {
-        userId.isBlank() -> "Enter a login ID."
+        userId.isBlank() -> "Enter an email."
+        !userId.isValidEmail() -> "Enter a valid email."
         isRegisterMode && nickname.isBlank() -> "Enter a nickname."
         password.isBlank() -> "Enter a password."
-        password.length < 4 -> "Password must be at least 4 characters."
+        password.length < 6 -> "Password must be at least 6 characters."
         else -> null
     }
+}
+
+private fun validatePasswordResetInput(userId: String): String? {
+    return when {
+        userId.isBlank() -> "Enter an email."
+        !userId.isValidEmail() -> "Enter a valid email."
+        else -> null
+    }
+}
+
+private fun String.isValidEmail(): Boolean {
+    return Patterns.EMAIL_ADDRESS.matcher(trim()).matches()
 }

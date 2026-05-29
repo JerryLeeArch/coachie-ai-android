@@ -549,7 +549,7 @@ fun GoalSettingsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = if (manualTargetsEnabled) "Manual Override" else "AI Plan",
+                        text = if (manualTargetsEnabled) "Manual Override" else "Manual Override Plan Off",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.SemiBold
                     )

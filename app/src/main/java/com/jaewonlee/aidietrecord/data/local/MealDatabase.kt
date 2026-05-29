@@ -20,7 +20,7 @@ import com.jaewonlee.aidietrecord.data.model.UserAccount
         GoalPlanEntity::class,
         BodyMeasurementEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = false
 )
 abstract class MealDatabase : RoomDatabase() {
@@ -39,7 +39,13 @@ abstract class MealDatabase : RoomDatabase() {
                     MealDatabase::class.java,
                     "meal_records.db"
                 )
-                    .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                    .addMigrations(
+                        MIGRATION_4_5,
+                        MIGRATION_5_6,
+                        MIGRATION_6_7,
+                        MIGRATION_7_8,
+                        MIGRATION_8_9
+                    )
                     .fallbackToDestructiveMigration(true)
                     .build()
 
@@ -163,6 +169,18 @@ abstract class MealDatabase : RoomDatabase() {
                 db.execSQL(
                     "CREATE INDEX IF NOT EXISTS index_body_measurements_ownerId_measuredEpochDay " +
                         "ON body_measurements(ownerId, measuredEpochDay)"
+                )
+            }
+        }
+
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE user_accounts ADD COLUMN firebaseUid TEXT")
+                db.execSQL(
+                    """
+                    CREATE UNIQUE INDEX IF NOT EXISTS index_user_accounts_firebaseUid
+                    ON user_accounts(firebaseUid)
+                    """.trimIndent()
                 )
             }
         }
