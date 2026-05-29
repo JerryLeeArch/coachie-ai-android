@@ -557,48 +557,9 @@ The operation couldn't be completed. Unable to locate a Java Runtime.
 
 7. 현재 한계 및 다음 작업
 
-현재까지 구현된 13주차 기능은 목표 설정과 목표 대비 식단 분석 구조를 안정화하는 데 집중되어 있다. 아직 다음 작업이 남아 있다.
-
-- pending meal review 상태를 현재 메모리에서 관리하고 있으므로 앱 종료 후에도 유지하려면 Room 기반 pending 테이블 추가
-- 체중/골격근/체지방률/기초대사량 추세를 더 자세히 볼 수 있는 별도 상세 그래프 화면 추가
-- 실제 사진 입력 케이스에서 Gemini의 음식 분리 정확도 수동 검증
-- export/import는 현재 JSON 텍스트 데이터 중심이므로, 다른 기기 이동 시 사진까지 완전히 복원하려면 이미지 파일 포함 백업 방식 추가 필요
-- import 시 기존 데이터를 교체하므로, 병합 import 또는 import 전 확인 다이얼로그 추가 필요
-- UI 리팩토링 후 실제 사용자 피드백을 받아 색상 대비, 카드 밀도, chart summary 문구를 추가 조정
-- 13주차 최종 제출 전 커밋 수와 커밋 히스토리 그래프 업데이트
-- 주요 화면 스크린샷 캡처 및 보고서 첨부
+다음 작업
+- home 화면에서 좌우 스와이프로 이전 날짜들의 통계 볼수 있게 하기
+- 앱 처음 실행할때 안내화면 만들기
+- 유저에게 하루에 몇번씩 알림 가도록 만들기
 
 
-8. 13주차 보고서에 포함하면 좋은 스크린샷
-
-- Edit Meal 화면의 Nutrition Details 입력 영역
-- Edit Meal 화면의 Meal Time 날짜/시간 입력 영역
-- Goal Settings의 Goal Period Target Date 모드
-- Goal Settings의 Duration 모드
-- AI Nutrition Plan 카드
-- Manual Override를 켠 Daily Targets 입력 영역
-- Goal Settings의 Input Current Body Status 입력 폼
-- Goal Settings의 최신 Body Status 적용 화면
-- Goals 화면의 Current Goal / Body Progress / Daily Targets 요약 화면
-- Goals 화면에서 Input Current Body Status 버튼이 Edit Goal 버튼보다 위에 배치된 화면
-- Goal Settings의 AI Goal Proposal 카드
-- AI Goal Proposal에서 Estimated 항목과 Confirm Goal 버튼이 보이는 화면
-- Insights의 Calorie Trend 라인 그래프
-- Insights의 Nutrition Trend 라인 그래프
-- Insights의 Body Progress 그래프와 Show all / Show less 버튼
-- Home 화면의 큰 칼로리 원형 게이지와 배경에 바로 배치된 Nutrition 링/상태 박스
-- Home 화면에서 목표 초과 시 Over goal by N kcal 문구가 표시되는 상태
-- Add Meal 화면의 compact photo area와 Meal Description 입력 영역
-- Goals 화면의 Daily Targets 카드 grid
-- Meal Details 화면의 meal summary 카드와 음식별 food item 카드
-- Add Meal의 단일 Meal Description 입력 화면
-- Home 화면의 AI is analyzing your meal 상태 카드
-- Home 화면의 Meal analysis ready 카드
-- Review Meal 화면의 Detected Foods 및 Confirm Meal 버튼
-- Login 화면의 Email 로그인 및 Forgot Password 버튼
-- Firebase 회원가입 화면
-- Profile 화면의 Send Password Reset Email 버튼
-- Profile 화면의 Export User Data / Import User Data 버튼
-- Android 파일 저장 화면에서 ai-meal-log-user-data.json을 생성하는 장면
-- JSON 백업 파일 import 후 식단/목표/체성분 기록이 복원된 화면
-- GitHub 커밋 히스토리 그래프
