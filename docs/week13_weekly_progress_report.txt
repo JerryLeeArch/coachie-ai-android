@@ -6,11 +6,6 @@
 제출 주차: 13주차
 진행 기간: 2026.05.25 ~ 2026.05.31
 개발 환경: Kotlin, Android Studio, Jetpack Compose, Material3, Navigation Compose, Room Database, Firebase Authentication, Firebase AI, Image Picker, Android Activity Result API
-현재 상태: preview branch 구현 및 빌드 검증 완료, PR 검토 단계
-
-주의 사항:
-이 문서는 13주차 진행보고서 작성을 위해 미리 정리한 초안이다. 현재 구현 내용은 codex/ui-polish-preview 브랜치에서 검증한 상태이며, 제출 전에는 최종 PR 번호, 커밋 수, 커밋 해시, 커밋 히스토리 그래프, 주요 화면 스크린샷을 다시 업데이트해야 한다.
-
 
 2. 13주차 개발 목표
 
@@ -564,15 +559,9 @@ The operation couldn't be completed. Unable to locate a Java Runtime.
 
 현재까지 구현된 13주차 기능은 목표 설정과 목표 대비 식단 분석 구조를 안정화하는 데 집중되어 있다. 아직 다음 작업이 남아 있다.
 
-- Review Meal 화면에서 AI 분석 결과를 사용자가 직접 수정할 수 있는 편집 기능 추가
 - pending meal review 상태를 현재 메모리에서 관리하고 있으므로 앱 종료 후에도 유지하려면 Room 기반 pending 테이블 추가
-- Home 화면의 분석 상태 카드 UI 세부 조정
-- 저장된 body_measurements를 별도 Body History 화면으로 보여주기
 - 체중/골격근/체지방률/기초대사량 추세를 더 자세히 볼 수 있는 별도 상세 그래프 화면 추가
-- Insights 라인 그래프에 축 라벨, 값 라벨, 터치 시 상세값 표시 같은 추가 인터랙션 구현
 - 실제 사진 입력 케이스에서 Gemini의 음식 분리 정확도 수동 검증
-- Firebase Console에서 Email/Password 로그인 방식 활성화 필요
-- Firebase 비밀번호 재설정 메일 템플릿 문구를 앱 목적에 맞게 조정
 - export/import는 현재 JSON 텍스트 데이터 중심이므로, 다른 기기 이동 시 사진까지 완전히 복원하려면 이미지 파일 포함 백업 방식 추가 필요
 - import 시 기존 데이터를 교체하므로, 병합 import 또는 import 전 확인 다이얼로그 추가 필요
 - UI 리팩토링 후 실제 사용자 피드백을 받아 색상 대비, 카드 밀도, chart summary 문구를 추가 조정
