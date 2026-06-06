@@ -25,6 +25,22 @@ interface MealDao {
     @Query("SELECT * FROM meals WHERE id = :mealId AND ownerId = :ownerId")
     suspend fun getMealRecord(mealId: Long, ownerId: Long): MealWithFoods?
 
+    @Query(
+        """
+        SELECT COUNT(*) FROM meals
+        WHERE ownerId = :ownerId
+            AND localDateEpochDay = :localDateEpochDay
+            AND createdAt >= :startMillis
+            AND createdAt < :endMillis
+        """
+    )
+    suspend fun countMealsInLocalTimeRange(
+        ownerId: Long,
+        localDateEpochDay: Long,
+        startMillis: Long,
+        endMillis: Long
+    ): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMeal(meal: MealEntity): Long
 

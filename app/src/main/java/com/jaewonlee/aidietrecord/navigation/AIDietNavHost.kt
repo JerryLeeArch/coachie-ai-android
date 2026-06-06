@@ -32,6 +32,7 @@ import com.jaewonlee.aidietrecord.data.repository.GoalRepository
 import com.jaewonlee.aidietrecord.data.repository.MealReviewRepository
 import com.jaewonlee.aidietrecord.data.repository.MealRepository
 import com.jaewonlee.aidietrecord.data.repository.UserDataPortabilityRepository
+import com.jaewonlee.aidietrecord.notification.MealLogReminderScheduler
 import com.jaewonlee.aidietrecord.ui.screen.AddMealScreen
 import com.jaewonlee.aidietrecord.ui.screen.CoachieStartingScreen
 import com.jaewonlee.aidietrecord.ui.screen.GoalSettingsScreen
@@ -201,7 +202,9 @@ fun AIDietNavHost() {
     }
 
     LaunchedEffect(currentUserId) {
-        mealLogReminderSettings = mealLogReminderSettingsStore.load(currentUserId)
+        val settings = mealLogReminderSettingsStore.load(currentUserId)
+        mealLogReminderSettings = settings
+        MealLogReminderScheduler.scheduleAll(context.applicationContext, currentUserId, settings)
     }
 
     LaunchedEffect(activeGoalPlan?.id) {
@@ -275,6 +278,12 @@ fun AIDietNavHost() {
                 }
             }
         }
+    }
+
+    fun saveMealLogReminderSettings(settings: MealLogReminderSettings) {
+        mealLogReminderSettings = settings
+        mealLogReminderSettingsStore.save(currentUserId, settings)
+        MealLogReminderScheduler.scheduleAll(context.applicationContext, currentUserId, settings)
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -631,6 +640,7 @@ fun AIDietNavHost() {
                     }
                 },
                 onLogoutClick = {
+                    MealLogReminderScheduler.cancelAll(context.applicationContext)
                     authRepository.logout()
                     authSessionStore.clear()
                     setCurrentUser(null)
@@ -653,24 +663,27 @@ fun AIDietNavHost() {
             MealLogReminderSettingsScreen(
                 breakfastEnabled = mealLogReminderSettings.breakfastEnabled,
                 onBreakfastEnabledChange = { enabled ->
-                    mealLogReminderSettings = mealLogReminderSettings.copy(
-                        breakfastEnabled = enabled
+                    saveMealLogReminderSettings(
+                        mealLogReminderSettings.copy(
+                            breakfastEnabled = enabled
+                        )
                     )
-                    mealLogReminderSettingsStore.save(currentUserId, mealLogReminderSettings)
                 },
                 lunchEnabled = mealLogReminderSettings.lunchEnabled,
                 onLunchEnabledChange = { enabled ->
-                    mealLogReminderSettings = mealLogReminderSettings.copy(
-                        lunchEnabled = enabled
+                    saveMealLogReminderSettings(
+                        mealLogReminderSettings.copy(
+                            lunchEnabled = enabled
+                        )
                     )
-                    mealLogReminderSettingsStore.save(currentUserId, mealLogReminderSettings)
                 },
                 dinnerEnabled = mealLogReminderSettings.dinnerEnabled,
                 onDinnerEnabledChange = { enabled ->
-                    mealLogReminderSettings = mealLogReminderSettings.copy(
-                        dinnerEnabled = enabled
+                    saveMealLogReminderSettings(
+                        mealLogReminderSettings.copy(
+                            dinnerEnabled = enabled
+                        )
                     )
-                    mealLogReminderSettingsStore.save(currentUserId, mealLogReminderSettings)
                 },
                 onBackClick = { navController.navigateUp() }
             )

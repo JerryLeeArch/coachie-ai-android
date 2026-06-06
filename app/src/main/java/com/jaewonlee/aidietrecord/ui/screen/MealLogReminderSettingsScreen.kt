@@ -1,5 +1,10 @@
 package com.jaewonlee.aidietrecord.ui.screen
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,10 +20,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.jaewonlee.aidietrecord.ui.theme.AppOutline
 import com.jaewonlee.aidietrecord.ui.theme.AppSurface
 import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
@@ -33,6 +44,37 @@ fun MealLogReminderSettingsScreen(
     onDinnerEnabledChange: (Boolean) -> Unit,
     onBackClick: () -> Unit
 ) {
+    val context = LocalContext.current
+    var pendingEnableChange by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            pendingEnableChange?.invoke()
+        }
+        pendingEnableChange = null
+    }
+    val requestNotificationPermissionIfNeeded: (() -> Unit) -> Unit = { onGranted ->
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            onGranted()
+        } else {
+            pendingEnableChange = onGranted
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+    val updateReminderEnabled: ((Boolean) -> Unit, Boolean) -> Unit = { onChange, enabled ->
+        if (enabled) {
+            requestNotificationPermissionIfNeeded { onChange(true) }
+        } else {
+            onChange(false)
+        }
+    }
+
     ScreenScaffold(
         title = "Meal Log Reminder Settings",
         onBackClick = onBackClick
@@ -54,21 +96,27 @@ fun MealLogReminderSettingsScreen(
                 time = "8:00 AM",
                 preview = "Start your morning with a quick meal log.",
                 enabled = breakfastEnabled,
-                onEnabledChange = onBreakfastEnabledChange
+                onEnabledChange = { enabled ->
+                    updateReminderEnabled(onBreakfastEnabledChange, enabled)
+                }
             )
             ReminderToggleCard(
                 title = "Lunch",
                 time = "12:30 PM",
                 preview = "A small lunch check-in keeps your day on track.",
                 enabled = lunchEnabled,
-                onEnabledChange = onLunchEnabledChange
+                onEnabledChange = { enabled ->
+                    updateReminderEnabled(onLunchEnabledChange, enabled)
+                }
             )
             ReminderToggleCard(
                 title = "Dinner",
                 time = "6:30 PM",
                 preview = "Wrap up gently with your dinner log.",
                 enabled = dinnerEnabled,
-                onEnabledChange = onDinnerEnabledChange
+                onEnabledChange = { enabled ->
+                    updateReminderEnabled(onDinnerEnabledChange, enabled)
+                }
             )
             Text(
                 text = "We'll skip reminders when you've already logged a meal for that time.",
