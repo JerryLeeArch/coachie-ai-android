@@ -30,9 +30,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import com.jaewonlee.aidietrecord.ui.theme.AppOutline
-import com.jaewonlee.aidietrecord.ui.theme.AppSurface
-import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 
 @Composable
 fun MealLogReminderSettingsScreen(
@@ -89,7 +86,7 @@ fun MealLogReminderSettingsScreen(
             Text(
                 text = "Choose the gentle check-ins you want during the day.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = AppTextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             ReminderToggleCard(
                 title = "Breakfast",
@@ -121,7 +118,7 @@ fun MealLogReminderSettingsScreen(
             Text(
                 text = "We'll skip reminders when you've already logged a meal for that time.",
                 style = MaterialTheme.typography.bodySmall,
-                color = AppTextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -138,8 +135,8 @@ private fun ReminderToggleCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
-        border = BorderStroke(1.dp, AppOutline)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
     ) {
         Row(
             modifier = Modifier
@@ -160,12 +157,12 @@ private fun ReminderToggleCard(
                 Text(
                     text = time,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = AppTextMuted
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = preview,
                     style = MaterialTheme.typography.bodySmall,
-                    color = AppTextMuted
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Switch(

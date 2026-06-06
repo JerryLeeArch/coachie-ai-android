@@ -23,6 +23,9 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -37,6 +40,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -47,18 +52,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.ui.theme.AppDanger
 import com.jaewonlee.aidietrecord.data.model.MealRecord
-import com.jaewonlee.aidietrecord.ui.theme.AppBackground
-import com.jaewonlee.aidietrecord.ui.theme.AppDangerSoft
-import com.jaewonlee.aidietrecord.ui.theme.AppOutline
 import com.jaewonlee.aidietrecord.ui.theme.AppPrimary
-import com.jaewonlee.aidietrecord.ui.theme.AppPrimarySoft
 import com.jaewonlee.aidietrecord.ui.theme.AppSuccess
-import com.jaewonlee.aidietrecord.ui.theme.AppSuccessSoft
-import com.jaewonlee.aidietrecord.ui.theme.AppSurface
-import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceSoft
-import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceTonal
-import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
-import com.jaewonlee.aidietrecord.ui.theme.AppTextPrimary
 import com.jaewonlee.aidietrecord.ui.theme.AppWarning
 import com.jaewonlee.aidietrecord.ui.theme.MacroCarb
 import com.jaewonlee.aidietrecord.ui.theme.MacroFat
@@ -71,12 +66,6 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-private val HomeBackground = AppBackground
-private val CardSurface = AppSurface
-private val TonalSurface = AppSurfaceTonal
-private val TrackColor = AppOutline
-private val TextPrimary = AppTextPrimary
-private val TextMuted = AppTextMuted
 private val PrimaryAction = AppPrimary
 private val CarbColor = MacroCarb
 private val ProteinColor = MacroProtein
@@ -125,7 +114,7 @@ fun HomeScreen(
         .format(DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.ENGLISH))
 
     Scaffold(
-        containerColor = HomeBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             HomeBottomBar(
                 onRecentStatsClick = onRecentStatsClick,
@@ -224,15 +213,15 @@ private fun MealAnalysisNoticeCard(
     onDismissMealAnalysisClick: () -> Unit
 ) {
     val noticeContainerColor = when {
-        notice.isAnalyzing -> AppPrimarySoft
-        notice.errorMessage != null -> AppDangerSoft
-        else -> AppSuccessSoft
+        notice.isAnalyzing -> MaterialTheme.colorScheme.primaryContainer
+        notice.errorMessage != null -> MaterialTheme.colorScheme.errorContainer
+        else -> MaterialTheme.colorScheme.secondaryContainer
     }
 
     Card(
         colors = CardDefaults.cardColors(containerColor = noticeContainerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -252,12 +241,12 @@ private fun MealAnalysisNoticeCard(
                                 text = "AI is analyzing your meal",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = TextPrimary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
                                 text = "It will appear here for review before it affects today's totals.",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = TextMuted
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
@@ -267,7 +256,7 @@ private fun MealAnalysisNoticeCard(
                         text = "Meal analysis failed",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = notice.errorMessage,
@@ -298,12 +287,12 @@ private fun MealAnalysisNoticeCard(
                         text = "Meal analysis ready",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = TextPrimary
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = "${reviewedMeal.foods.size} food item(s) detected · ${reviewedMeal.calories} kcal estimated",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = TextMuted
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Button(
                         onClick = onReviewMealClick,
@@ -333,12 +322,12 @@ private fun HomeHeader(
                 text = "Coachie AI",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onBackground
             )
             Text(
                 text = todayLabel,
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         ProfileActionButton(
@@ -374,7 +363,7 @@ private fun CalorieHero(
                 text = selectedDate.intakeTitle(today),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onBackground
             )
             TextButton(onClick = onMealListClick) {
                 Text(
@@ -394,7 +383,8 @@ private fun CalorieHero(
             val summary = mealsByDate.summaryForDate(pageDate)
             CalorieHeroPage(
                 totalCalories = summary.calories,
-                targetCalories = targetCalories
+                targetCalories = targetCalories,
+                isActivePage = page == pagerState.currentPage
             )
         }
     }
@@ -403,17 +393,39 @@ private fun CalorieHero(
 @Composable
 private fun CalorieHeroPage(
     totalCalories: Int,
-    targetCalories: Int
+    targetCalories: Int,
+    isActivePage: Boolean
 ) {
     val calorieDelta = targetCalories - totalCalories
     val calorieProgress = (totalCalories / targetCalories.toFloat()).coerceIn(0f, 1f)
+    val overRatio = ((totalCalories - targetCalories).coerceAtLeast(0) / targetCalories.toFloat())
     val isOverGoal = calorieDelta < 0
+    val animatedProgress = remember { Animatable(calorieProgress) }
+    val animatedOverRatio = remember { Animatable(overRatio) }
     val statusText = if (isOverGoal) {
         "Over goal by ${-calorieDelta} kcal"
     } else {
         "$calorieDelta kcal left"
     }
     val statusColor = if (isOverGoal) AppDanger else AppSuccess
+
+    LaunchedEffect(isActivePage, totalCalories, targetCalories) {
+        if (isActivePage) {
+            animatedProgress.snapTo(0f)
+            animatedOverRatio.snapTo(0f)
+        } else {
+            animatedProgress.snapTo(calorieProgress)
+            animatedOverRatio.snapTo(overRatio)
+        }
+        animatedProgress.animateTo(
+            targetValue = calorieProgress,
+            animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing)
+        )
+        animatedOverRatio.animateTo(
+            targetValue = overRatio,
+            animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing)
+        )
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -423,8 +435,8 @@ private fun CalorieHeroPage(
         CalorieGauge(
             totalCalories = totalCalories,
             targetCalories = targetCalories,
-            progress = calorieProgress,
-            overRatio = ((totalCalories - targetCalories).coerceAtLeast(0) / targetCalories.toFloat())
+            progress = animatedProgress.value,
+            overRatio = animatedOverRatio.value
         )
 
         Column(
@@ -440,12 +452,16 @@ private fun CalorieHeroPage(
             Text(
                 text = "$targetCalories kcal daily goal",
                 style = MaterialTheme.typography.bodyMedium,
-                color = TextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             StatusPill(
                 text = if (isOverGoal) "Over target" else "On pace",
                 color = statusColor,
-                containerColor = if (isOverGoal) AppDangerSoft else AppSuccessSoft
+                containerColor = if (isOverGoal) {
+                    MaterialTheme.colorScheme.errorContainer
+                } else {
+                    MaterialTheme.colorScheme.secondaryContainer
+                }
             )
         }
     }
@@ -458,6 +474,9 @@ private fun CalorieGauge(
     progress: Float,
     overRatio: Float
 ) {
+    val trackColor = MaterialTheme.colorScheme.outline
+    val innerShadowColor = Color.Black.copy(alpha = 0.08f)
+
     Box(
         modifier = Modifier.size(168.dp),
         contentAlignment = Alignment.Center
@@ -475,13 +494,18 @@ private fun CalorieGauge(
             )
 
             drawArc(
-                color = TrackColor,
+                color = trackColor,
                 startAngle = -90f,
                 sweepAngle = 360f,
                 useCenter = false,
                 topLeft = topLeft,
                 size = androidx.compose.ui.geometry.Size(arcSize, arcSize),
                 style = arcStroke
+            )
+            drawCircle(
+                color = innerShadowColor,
+                radius = arcSize / 2f - strokeWidth / 2f + 1.dp.toPx(),
+                style = Stroke(width = 3.dp.toPx())
             )
             drawArc(
                 color = PrimaryAction,
@@ -512,12 +536,12 @@ private fun CalorieGauge(
                 text = totalCalories.toString(),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimary
+                color = MaterialTheme.colorScheme.onBackground
             )
             Text(
                 text = "of $targetCalories kcal",
                 style = MaterialTheme.typography.labelMedium,
-                color = TextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -546,7 +570,7 @@ private fun NutritionPanel(
             text = "Nutrition",
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onBackground
         )
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -576,7 +600,7 @@ private fun NutritionPanel(
             )
         }
 
-        HorizontalDivider(color = AppOutline)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outline)
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             HealthStatusCard(
@@ -627,11 +651,11 @@ private fun MacroRingChip(
 
     Column(
         modifier = modifier
-            .background(AppSurfaceSoft, RoundedCornerShape(8.dp))
-            .border(1.dp, AppOutline, RoundedCornerShape(8.dp))
-            .heightIn(min = 112.dp)
-            .padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+            .heightIn(min = 96.dp)
+            .padding(9.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -642,13 +666,13 @@ private fun MacroRingChip(
                 Text(
                     text = label,
                     style = MaterialTheme.typography.labelMedium,
-                    color = TextMuted
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "$value$unit",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimary
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }
@@ -656,13 +680,13 @@ private fun MacroRingChip(
             StatusPill(
                 text = "+$overAmount$unit",
                 color = AppDanger,
-                containerColor = AppDangerSoft
+                containerColor = MaterialTheme.colorScheme.errorContainer
             )
         } else {
             Text(
                 text = "Goal $target$unit",
                 style = MaterialTheme.typography.labelSmall,
-                color = TextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -673,6 +697,8 @@ private fun MiniProgressRing(
     progress: Float,
     color: Color
 ) {
+    val trackColor = MaterialTheme.colorScheme.outline
+
     Canvas(modifier = Modifier.size(34.dp)) {
         val strokeWidth = 4.dp.toPx()
         val arcSize = size.minDimension - strokeWidth
@@ -681,7 +707,7 @@ private fun MiniProgressRing(
             y = (size.height - arcSize) / 2f
         )
         drawArc(
-            color = TrackColor,
+            color = trackColor,
             startAngle = -90f,
             sweepAngle = 360f,
             useCenter = false,
@@ -714,11 +740,11 @@ private fun HealthStatusCard(
 ) {
     Column(
         modifier = modifier
-            .background(AppSurfaceSoft, RoundedCornerShape(8.dp))
-            .border(1.dp, AppOutline, RoundedCornerShape(8.dp))
-            .heightIn(min = 112.dp)
-            .padding(10.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+            .heightIn(min = 96.dp)
+            .padding(9.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically)
     ) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(7.dp),
@@ -733,14 +759,14 @@ private fun HealthStatusCard(
                 text = label,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
-                color = TextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         Text(
             text = "$value$unit",
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
-            color = TextPrimary
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text = "$status · $target$unit",
@@ -777,7 +803,7 @@ private fun HomeBottomBar(
     onGoalSettingsClick: () -> Unit
 ) {
     Surface(
-        color = CardSurface,
+        color = MaterialTheme.colorScheme.surface,
         shadowElevation = 4.dp
     ) {
         Row(
@@ -840,7 +866,7 @@ private fun ProfileActionButton(
         onClick = onClick,
         modifier = Modifier
             .size(44.dp)
-            .background(TonalSurface, CircleShape)
+            .background(MaterialTheme.colorScheme.secondaryContainer, CircleShape)
     ) {
         Text(
             text = label,

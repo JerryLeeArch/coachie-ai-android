@@ -24,10 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealFoodRecord
 import com.jaewonlee.aidietrecord.data.model.MealRecord
-import com.jaewonlee.aidietrecord.ui.theme.AppOutline
 import com.jaewonlee.aidietrecord.ui.theme.AppSuccess
-import com.jaewonlee.aidietrecord.ui.theme.AppSurface
-import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.util.UriImage
 
 @Composable
@@ -72,9 +69,9 @@ fun MealReviewScreen(
 @Composable
 private fun AnalyzingMealCard() {
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -92,7 +89,7 @@ private fun AnalyzingMealCard() {
             Text(
                 text = "The meal will not be saved until you confirm the result.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = AppTextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -105,9 +102,9 @@ private fun MealReviewErrorCard(
     onDiscardClick: () -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -138,9 +135,9 @@ private fun MealReviewErrorCard(
 @Composable
 private fun MealReviewEmptyCard(onDiscardClick: () -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -180,9 +177,9 @@ private fun MealReviewResult(
     }
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -198,7 +195,7 @@ private fun MealReviewResult(
             Text(
                 text = reviewedMeal.aiSummary ?: "AI analyzed your meal.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = AppTextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
                 text = "${reviewedMeal.calories} kcal total",
@@ -209,9 +206,9 @@ private fun MealReviewResult(
     }
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -231,9 +228,9 @@ private fun MealReviewResult(
     }
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -284,12 +281,12 @@ private fun ReviewFoodRow(food: MealFoodRecord) {
         Text(
             text = "Carbs ${food.carbsGram}g · Protein ${food.proteinGram}g · Fat ${food.fatGram}g",
             style = MaterialTheme.typography.bodySmall,
-            color = AppTextMuted
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = "Fiber ${food.fiberGram}g · Sugar ${food.sugarGram}g · Sodium ${food.sodiumMilligram}mg",
             style = MaterialTheme.typography.bodySmall,
-            color = AppTextMuted
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -306,7 +303,7 @@ private fun ReviewInfoRow(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = AppTextMuted
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,

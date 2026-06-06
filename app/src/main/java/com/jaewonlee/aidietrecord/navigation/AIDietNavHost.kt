@@ -53,7 +53,10 @@ import kotlinx.coroutines.launch
 private const val StartingScreenMinDurationMillis = 650L
 
 @Composable
-fun AIDietNavHost() {
+fun AIDietNavHost(
+    darkThemeEnabled: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit
+) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val authSessionStore = remember(context.applicationContext) {
@@ -309,6 +312,8 @@ fun AIDietNavHost() {
                                         userId = userAccount.userId
                                         password = ""
                                         currentMetabolicRate = ""
+                                        pendingMealReview = null
+                                        mealSaveInProgress = false
                                         authErrorMessage = null
                                         authInfoMessage = null
                                         navController.navigate(Route.Home.path) {
@@ -344,6 +349,8 @@ fun AIDietNavHost() {
                                         userId = userAccount.userId
                                         password = ""
                                         currentMetabolicRate = ""
+                                        pendingMealReview = null
+                                        mealSaveInProgress = false
                                         authErrorMessage = null
                                         authInfoMessage = null
                                         navController.navigate(Route.Home.path) {
@@ -438,8 +445,11 @@ fun AIDietNavHost() {
                 errorMessage = pendingReview?.errorMessage,
                 onConfirmClick = { reviewedMeal ->
                     coroutineScope.launch {
-                        mealRepository.addMealRecord(reviewedMeal)
+                        if (currentUserId > 0L && reviewedMeal.ownerId == currentUserId) {
+                            mealRepository.addMealRecord(reviewedMeal)
+                        }
                         pendingMealReview = null
+                        mealSaveInProgress = false
                         navigateHome()
                     }
                 },
@@ -541,6 +551,8 @@ fun AIDietNavHost() {
                 },
                 errorMessage = profileErrorMessage,
                 infoMessage = profileInfoMessage,
+                darkThemeEnabled = darkThemeEnabled,
+                onDarkThemeChange = onDarkThemeChange,
                 isDataTransferInProgress = dataTransferInProgress,
                 onBackClick = { navController.navigateUp() },
                 onSaveClick = {
@@ -652,6 +664,8 @@ fun AIDietNavHost() {
                     profileInfoMessage = null
                     authErrorMessage = null
                     authInfoMessage = null
+                    pendingMealReview = null
+                    mealSaveInProgress = false
                     navController.navigate(Route.Login.path) {
                         popUpTo(Route.Home.path) { inclusive = true }
                     }

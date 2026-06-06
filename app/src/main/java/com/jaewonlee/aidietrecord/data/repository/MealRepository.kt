@@ -46,6 +46,6 @@ class MealRepository(
     }
 
     suspend fun deleteMealRecord(mealRecord: MealRecord) {
-        mealDao.deleteMeal(mealRecord.id)
+        mealDao.deleteMeal(mealRecord.id, mealRecord.ownerId)
     }
 }

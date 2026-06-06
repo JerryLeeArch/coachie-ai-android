@@ -34,11 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealFoodRecord
 import com.jaewonlee.aidietrecord.data.model.MealRecord
-import com.jaewonlee.aidietrecord.ui.theme.AppOutline
 import com.jaewonlee.aidietrecord.ui.theme.AppSuccess
-import com.jaewonlee.aidietrecord.ui.theme.AppSurface
-import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceSoft
-import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.theme.MacroCarb
 import com.jaewonlee.aidietrecord.ui.theme.MacroFat
 import com.jaewonlee.aidietrecord.ui.theme.MacroFiber
@@ -70,9 +66,9 @@ fun MealDetailScreen(
         ) {
             if (mealRecord == null) {
                 Card(
-                    colors = CardDefaults.cardColors(containerColor = AppSurface),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                    border = BorderStroke(1.dp, AppOutline),
+                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -99,9 +95,9 @@ fun MealDetailScreen(
             )
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                border = BorderStroke(1.dp, AppOutline),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -112,7 +108,7 @@ fun MealDetailScreen(
                     Text(
                         text = "Meal summary",
                         style = MaterialTheme.typography.labelLarge,
-                        color = AppTextMuted
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = mealRecord.foodName,
@@ -124,7 +120,7 @@ fun MealDetailScreen(
                     Text(
                         text = "Logged at: ${formatMealDateTime(mealRecord)}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = AppTextMuted
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         NutritionMetricPill(
@@ -136,7 +132,7 @@ fun MealDetailScreen(
                         NutritionMetricPill(
                             label = "Foods",
                             value = "${mealRecord.foods.size}",
-                            color = AppTextMuted,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -171,9 +167,9 @@ fun MealDetailScreen(
             }
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                border = BorderStroke(1.dp, AppOutline),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -200,9 +196,9 @@ fun MealDetailScreen(
             }
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                border = BorderStroke(1.dp, AppOutline),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -266,9 +262,9 @@ private fun SectionTitle(text: String) {
 @Composable
 private fun MealFoodCard(food: MealFoodRecord) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -301,7 +297,7 @@ private fun MealFoodCard(food: MealFoodRecord) {
                 Text(
                     text = food.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = AppTextMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -324,7 +320,7 @@ private fun NutritionMetricPill(
 ) {
     Column(
         modifier = modifier
-            .background(AppSurfaceSoft, RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
             .padding(horizontal = 10.dp, vertical = 9.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
@@ -340,7 +336,7 @@ private fun NutritionMetricPill(
             Text(
                 text = label,
                 style = MaterialTheme.typography.labelSmall,
-                color = AppTextMuted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1
             )
         }

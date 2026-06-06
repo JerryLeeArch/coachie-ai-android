@@ -53,8 +53,8 @@ interface MealDao {
     @Query("DELETE FROM meal_foods WHERE mealId = :mealId")
     suspend fun deleteMealFoods(mealId: Long)
 
-    @Query("DELETE FROM meals WHERE id = :mealId")
-    suspend fun deleteMeal(mealId: Long)
+    @Query("DELETE FROM meals WHERE id = :mealId AND ownerId = :ownerId")
+    suspend fun deleteMeal(mealId: Long, ownerId: Long)
 
     @Query("DELETE FROM meals WHERE ownerId = :ownerId")
     suspend fun deleteMealsForOwner(ownerId: Long)

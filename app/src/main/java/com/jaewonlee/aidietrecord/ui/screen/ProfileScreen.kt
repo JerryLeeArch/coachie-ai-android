@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,8 +18,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -35,6 +38,8 @@ fun ProfileScreen(
     onPasswordChange: (String) -> Unit,
     errorMessage: String?,
     infoMessage: String?,
+    darkThemeEnabled: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit,
     isDataTransferInProgress: Boolean,
     onBackClick: () -> Unit,
     onSaveClick: () -> Unit,
@@ -61,7 +66,13 @@ fun ProfileScreen(
 
     ScreenScaffold(
         title = "Profile",
-        onBackClick = onBackClick
+        onBackClick = onBackClick,
+        actions = {
+            DarkModeAction(
+                darkThemeEnabled = darkThemeEnabled,
+                onDarkThemeChange = onDarkThemeChange
+            )
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -167,6 +178,28 @@ fun ProfileScreen(
                 Text("Log Out")
             }
         }
+    }
+}
+
+@Composable
+private fun DarkModeAction(
+    darkThemeEnabled: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier.padding(end = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Dark",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Switch(
+            checked = darkThemeEnabled,
+            onCheckedChange = onDarkThemeChange
+        )
     }
 }
 

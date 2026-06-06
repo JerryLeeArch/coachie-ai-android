@@ -2,13 +2,13 @@ package com.jaewonlee.aidietrecord.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val AppBackground = Color(0xFFF7F5EF)
-val AppSurface = Color(0xFFFFFCF7)
-val AppSurfaceSoft = Color(0xFFF1EFE7)
-val AppSurfaceTonal = Color(0xFFE6F4EE)
-val AppOutline = Color(0xFFE4DED2)
+val AppBackground = Color(0xFFF5F6F2)
+val AppSurface = Color(0xFFFCFCF9)
+val AppSurfaceSoft = Color(0xFFEDEFE8)
+val AppSurfaceTonal = Color(0xFFDDF0E8)
+val AppOutline = Color(0xFFDDE2D7)
 val AppTextPrimary = Color(0xFF20251F)
-val AppTextMuted = Color(0xFF747A6F)
+val AppTextMuted = Color(0xFF70786D)
 
 val AppPrimary = Color(0xFF4DBA8C)
 val AppPrimarySoft = Color(0xFFE1F3EA)

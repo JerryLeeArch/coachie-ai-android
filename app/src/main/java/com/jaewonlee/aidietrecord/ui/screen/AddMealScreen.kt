@@ -42,9 +42,6 @@ import com.jaewonlee.aidietrecord.data.model.MealUploadDraft
 import com.jaewonlee.aidietrecord.data.model.currentTimeZoneId
 import com.jaewonlee.aidietrecord.data.model.localDateEpochDay
 import com.jaewonlee.aidietrecord.data.model.zoneIdOrSystemDefault
-import com.jaewonlee.aidietrecord.ui.theme.AppOutline
-import com.jaewonlee.aidietrecord.ui.theme.AppSurface
-import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.util.UriImage
 import java.time.Instant
 import java.time.LocalDate
@@ -308,9 +305,9 @@ private fun SingleMealCaptureScreen(
             )
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = AppSurface),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-                border = BorderStroke(1.dp, AppOutline),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -423,7 +420,7 @@ private fun SectionHeader(
         Text(
             text = trailingText,
             style = MaterialTheme.typography.labelLarge,
-            color = AppTextMuted
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -436,9 +433,9 @@ private fun MealDateTimeCard(
     onTimeChange: (String) -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -502,9 +499,9 @@ private fun FoodDraftCard(
     }
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {

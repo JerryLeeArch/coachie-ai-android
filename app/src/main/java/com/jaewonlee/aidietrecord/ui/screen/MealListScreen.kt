@@ -27,9 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealRecord
-import com.jaewonlee.aidietrecord.ui.theme.AppOutline
-import com.jaewonlee.aidietrecord.ui.theme.AppSurface
-import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.util.UriImage
 import com.jaewonlee.aidietrecord.ui.util.formatMealDateTime
 import com.jaewonlee.aidietrecord.ui.util.isTodayMeal
@@ -141,9 +138,9 @@ private fun EmptyMealRecordMessage(selectedFilter: MealRecordFilter) {
     }
 
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -162,9 +159,9 @@ private fun MealListItem(
     onClick: () -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
             .fillMaxWidth()
@@ -192,18 +189,18 @@ private fun MealListItem(
                 Text(
                     text = formatMealDateTime(mealRecord),
                     style = MaterialTheme.typography.labelMedium,
-                    color = AppTextMuted
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text("${mealRecord.calories} kcal", style = MaterialTheme.typography.bodyMedium)
                 Text(
                     text = "Carbs ${mealRecord.carbsGram}g | Protein ${mealRecord.proteinGram}g | Fat ${mealRecord.fatGram}g",
                     style = MaterialTheme.typography.bodySmall,
-                    color = AppTextMuted
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = "Fiber ${mealRecord.fiberGram}g | Sugar ${mealRecord.sugarGram}g | Sodium ${mealRecord.sodiumMilligram}mg",
                     style = MaterialTheme.typography.bodySmall,
-                    color = AppTextMuted
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     text = mealRecord.memo,

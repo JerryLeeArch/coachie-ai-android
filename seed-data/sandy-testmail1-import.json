@@ -1,0 +1,706 @@
+{
+  "format": "ai-diet-record-user-data",
+  "schemaVersion": 1,
+  "exportedAt": 1780750800000,
+  "user": {
+    "firebaseUid": "eiahHUGbveQpbWGEDwqYWlg12b03",
+    "email": "testmail1@gmail.com",
+    "nickname": "Sandy"
+  },
+  "goalPlans": [
+    {
+      "validFromEpochDay": 20585,
+      "validToEpochDay": 20641,
+      "startWeightKg": 58.4,
+      "startMuscleMassKg": 22.1,
+      "startBodyFatPercent": 28.6,
+      "targetWeightKg": 53,
+      "targetMuscleMassKg": 22.4,
+      "targetBodyFatPercent": 23,
+      "dailyCalories": 1650,
+      "dailyCarbsGram": 180,
+      "dailyProteinGram": 95,
+      "dailyFatGram": 48,
+      "dailyFiberGram": 28,
+      "dailySugarGram": 38,
+      "dailySodiumMilligram": 1900,
+      "planSummary": "Fat-loss plan with moderate calories, high protein, and steady fiber for satiety.",
+      "plannerVersion": "demo-seed-v1",
+      "createdAt": 1778625000000
+    }
+  ],
+  "bodyMeasurements": [
+    {
+      "measuredEpochDay": 20585,
+      "weightKg": 58.4,
+      "muscleMassKg": 22.1,
+      "basalMetabolicRateKcal": 1320,
+      "bodyFatMassKg": 16.7,
+      "bodyFatPercent": 28.6,
+      "createdAt": 1778624400000
+    },
+    {
+      "measuredEpochDay": 20592,
+      "weightKg": 57.9,
+      "muscleMassKg": 22,
+      "basalMetabolicRateKcal": 1315,
+      "bodyFatMassKg": 16.2,
+      "bodyFatPercent": 28,
+      "createdAt": 1779229200000
+    },
+    {
+      "measuredEpochDay": 20599,
+      "weightKg": 57.3,
+      "muscleMassKg": 22.2,
+      "basalMetabolicRateKcal": 1322,
+      "bodyFatMassKg": 15.6,
+      "bodyFatPercent": 27.3,
+      "createdAt": 1779834000000
+    },
+    {
+      "measuredEpochDay": 20606,
+      "weightKg": 56.8,
+      "muscleMassKg": 22.1,
+      "basalMetabolicRateKcal": 1318,
+      "bodyFatMassKg": 15.2,
+      "bodyFatPercent": 26.8,
+      "createdAt": 1780438800000
+    },
+    {
+      "measuredEpochDay": 20609,
+      "weightKg": 56.5,
+      "muscleMassKg": 22.2,
+      "basalMetabolicRateKcal": 1320,
+      "bodyFatMassKg": 14.9,
+      "bodyFatPercent": 26.4,
+      "createdAt": 1780698000000
+    }
+  ],
+  "meals": [
+    {
+      "memo": "Light breakfast before class",
+      "imageUri": null,
+      "aiSummary": "AI estimated a light high-protein breakfast.",
+      "createdAt": 1778627400000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20585,
+      "foods": [
+        {
+          "foodName": "Greek yogurt",
+          "description": "Plain yogurt cup",
+          "imageUri": null,
+          "calories": 130,
+          "carbsGram": 10,
+          "proteinGram": 17,
+          "fatGram": 3,
+          "fiberGram": 0,
+          "sugarGram": 6,
+          "sodiumMilligram": 65,
+          "aiFoodName": "Greek yogurt",
+          "aiCalories": 130,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Banana",
+          "description": "One small banana",
+          "imageUri": null,
+          "calories": 90,
+          "carbsGram": 23,
+          "proteinGram": 1,
+          "fatGram": 0,
+          "fiberGram": 3,
+          "sugarGram": 12,
+          "sodiumMilligram": 1,
+          "aiFoodName": "Banana",
+          "aiCalories": 90,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Boiled egg",
+          "description": "One egg",
+          "imageUri": null,
+          "calories": 78,
+          "carbsGram": 1,
+          "proteinGram": 6,
+          "fatGram": 5,
+          "fiberGram": 0,
+          "sugarGram": 0,
+          "sodiumMilligram": 62,
+          "aiFoodName": "Boiled egg",
+          "aiCalories": 78,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Campus lunch salad",
+      "imageUri": null,
+      "aiSummary": "AI split lunch into salad and sweet potato.",
+      "createdAt": 1778643600000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20585,
+      "foods": [
+        {
+          "foodName": "Chicken breast salad",
+          "description": "Greens with grilled chicken",
+          "imageUri": null,
+          "calories": 360,
+          "carbsGram": 28,
+          "proteinGram": 38,
+          "fatGram": 12,
+          "fiberGram": 7,
+          "sugarGram": 8,
+          "sodiumMilligram": 620,
+          "aiFoodName": "Chicken breast salad",
+          "aiCalories": 360,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Sweet potato",
+          "description": "Small roasted sweet potato",
+          "imageUri": null,
+          "calories": 115,
+          "carbsGram": 27,
+          "proteinGram": 2,
+          "fatGram": 0,
+          "fiberGram": 4,
+          "sugarGram": 7,
+          "sodiumMilligram": 35,
+          "aiFoodName": "Sweet potato",
+          "aiCalories": 115,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Quick convenience breakfast",
+      "imageUri": null,
+      "aiSummary": "AI estimated a compact protein-focused breakfast.",
+      "createdAt": 1778887200000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20588,
+      "foods": [
+        {
+          "foodName": "Protein shake",
+          "description": "Ready-to-drink shake",
+          "imageUri": null,
+          "calories": 180,
+          "carbsGram": 12,
+          "proteinGram": 25,
+          "fatGram": 4,
+          "fiberGram": 1,
+          "sugarGram": 3,
+          "sodiumMilligram": 220,
+          "aiFoodName": "Protein shake",
+          "aiCalories": 180,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Almonds",
+          "description": "Small handful",
+          "imageUri": null,
+          "calories": 98,
+          "carbsGram": 4,
+          "proteinGram": 4,
+          "fatGram": 9,
+          "fiberGram": 2,
+          "sugarGram": 1,
+          "sodiumMilligram": 0,
+          "aiFoodName": "Almonds",
+          "aiCalories": 98,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Dinner at home",
+      "imageUri": null,
+      "aiSummary": "AI estimated Korean dinner portions.",
+      "createdAt": 1778925000000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20588,
+      "foods": [
+        {
+          "foodName": "Tofu kimchi soup",
+          "description": "Tofu stew with kimchi",
+          "imageUri": null,
+          "calories": 330,
+          "carbsGram": 18,
+          "proteinGram": 24,
+          "fatGram": 16,
+          "fiberGram": 5,
+          "sugarGram": 6,
+          "sodiumMilligram": 980,
+          "aiFoodName": "Tofu kimchi soup",
+          "aiCalories": 330,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Multigrain rice half bowl",
+          "description": "Half bowl",
+          "imageUri": null,
+          "calories": 155,
+          "carbsGram": 33,
+          "proteinGram": 4,
+          "fatGram": 1,
+          "fiberGram": 2,
+          "sugarGram": 0,
+          "sodiumMilligram": 8,
+          "aiFoodName": "Multigrain rice half bowl",
+          "aiCalories": 155,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "After lecture lunch",
+      "imageUri": null,
+      "aiSummary": "AI saved lunch from text notes.",
+      "createdAt": 1779248100000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20592,
+      "foods": [
+        {
+          "foodName": "Tuna kimbap",
+          "description": "One roll",
+          "imageUri": null,
+          "calories": 390,
+          "carbsGram": 58,
+          "proteinGram": 16,
+          "fatGram": 10,
+          "fiberGram": 4,
+          "sugarGram": 7,
+          "sodiumMilligram": 780,
+          "aiFoodName": "Tuna kimbap",
+          "aiCalories": 390,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Iced americano",
+          "description": "No sugar",
+          "imageUri": null,
+          "calories": 10,
+          "carbsGram": 2,
+          "proteinGram": 0,
+          "fatGram": 0,
+          "fiberGram": 0,
+          "sugarGram": 0,
+          "sodiumMilligram": 5,
+          "aiFoodName": "Iced americano",
+          "aiCalories": 10,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Small dinner",
+      "imageUri": null,
+      "aiSummary": "AI estimated balanced dinner.",
+      "createdAt": 1779271800000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20592,
+      "foods": [
+        {
+          "foodName": "Grilled salmon",
+          "description": "Small fillet",
+          "imageUri": null,
+          "calories": 285,
+          "carbsGram": 0,
+          "proteinGram": 31,
+          "fatGram": 17,
+          "fiberGram": 0,
+          "sugarGram": 0,
+          "sodiumMilligram": 75,
+          "aiFoodName": "Grilled salmon",
+          "aiCalories": 285,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Steamed broccoli",
+          "description": "One cup",
+          "imageUri": null,
+          "calories": 55,
+          "carbsGram": 11,
+          "proteinGram": 4,
+          "fatGram": 1,
+          "fiberGram": 5,
+          "sugarGram": 2,
+          "sodiumMilligram": 55,
+          "aiFoodName": "Steamed broccoli",
+          "aiCalories": 55,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Brown rice",
+          "description": "Half bowl",
+          "imageUri": null,
+          "calories": 165,
+          "carbsGram": 35,
+          "proteinGram": 4,
+          "fatGram": 1,
+          "fiberGram": 2,
+          "sugarGram": 0,
+          "sodiumMilligram": 8,
+          "aiFoodName": "Brown rice",
+          "aiCalories": 165,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Cafe breakfast",
+      "imageUri": null,
+      "aiSummary": "AI estimated cafe breakfast.",
+      "createdAt": 1779494400000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20595,
+      "foods": [
+        {
+          "foodName": "Avocado toast",
+          "description": "One slice",
+          "imageUri": null,
+          "calories": 310,
+          "carbsGram": 32,
+          "proteinGram": 10,
+          "fatGram": 16,
+          "fiberGram": 7,
+          "sugarGram": 3,
+          "sodiumMilligram": 420,
+          "aiFoodName": "Avocado toast",
+          "aiCalories": 310,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Latte",
+          "description": "Small low-fat latte",
+          "imageUri": null,
+          "calories": 120,
+          "carbsGram": 12,
+          "proteinGram": 8,
+          "fatGram": 4,
+          "fiberGram": 0,
+          "sugarGram": 10,
+          "sodiumMilligram": 95,
+          "aiFoodName": "Latte",
+          "aiCalories": 120,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Light spicy dinner",
+      "imageUri": null,
+      "aiSummary": "AI split noodles and added chicken.",
+      "createdAt": 1779529500000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20595,
+      "foods": [
+        {
+          "foodName": "Bibim noodles small bowl",
+          "description": "Half portion",
+          "imageUri": null,
+          "calories": 360,
+          "carbsGram": 62,
+          "proteinGram": 9,
+          "fatGram": 8,
+          "fiberGram": 4,
+          "sugarGram": 14,
+          "sodiumMilligram": 830,
+          "aiFoodName": "Bibim noodles small bowl",
+          "aiCalories": 360,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Chicken breast strips",
+          "description": "Added protein",
+          "imageUri": null,
+          "calories": 150,
+          "carbsGram": 2,
+          "proteinGram": 28,
+          "fatGram": 3,
+          "fiberGram": 0,
+          "sugarGram": 0,
+          "sodiumMilligram": 260,
+          "aiFoodName": "Chicken breast strips",
+          "aiCalories": 150,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Meal prep breakfast",
+      "imageUri": null,
+      "aiSummary": "AI estimated oats and fruit.",
+      "createdAt": 1779837300000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20599,
+      "foods": [
+        {
+          "foodName": "Overnight oats",
+          "description": "Oats with chia",
+          "imageUri": null,
+          "calories": 280,
+          "carbsGram": 42,
+          "proteinGram": 12,
+          "fatGram": 8,
+          "fiberGram": 8,
+          "sugarGram": 9,
+          "sodiumMilligram": 120,
+          "aiFoodName": "Overnight oats",
+          "aiCalories": 280,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Blueberries",
+          "description": "Small topping",
+          "imageUri": null,
+          "calories": 40,
+          "carbsGram": 10,
+          "proteinGram": 0,
+          "fatGram": 0,
+          "fiberGram": 2,
+          "sugarGram": 7,
+          "sodiumMilligram": 1,
+          "aiFoodName": "Blueberries",
+          "aiCalories": 40,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "School cafeteria",
+      "imageUri": null,
+      "aiSummary": "AI estimated cafeteria rice bowl.",
+      "createdAt": 1779853800000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20599,
+      "foods": [
+        {
+          "foodName": "Chicken bibimbap",
+          "description": "Rice bowl with chicken and vegetables",
+          "imageUri": null,
+          "calories": 520,
+          "carbsGram": 68,
+          "proteinGram": 33,
+          "fatGram": 14,
+          "fiberGram": 7,
+          "sugarGram": 8,
+          "sodiumMilligram": 920,
+          "aiFoodName": "Chicken bibimbap",
+          "aiCalories": 520,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Weekend brunch",
+      "imageUri": null,
+      "aiSummary": "AI estimated brunch items.",
+      "createdAt": 1780114800000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20602,
+      "foods": [
+        {
+          "foodName": "Egg white omelet",
+          "description": "Vegetable omelet",
+          "imageUri": null,
+          "calories": 230,
+          "carbsGram": 10,
+          "proteinGram": 28,
+          "fatGram": 8,
+          "fiberGram": 3,
+          "sugarGram": 4,
+          "sodiumMilligram": 390,
+          "aiFoodName": "Egg white omelet",
+          "aiCalories": 230,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Whole wheat toast",
+          "description": "One slice",
+          "imageUri": null,
+          "calories": 95,
+          "carbsGram": 18,
+          "proteinGram": 4,
+          "fatGram": 1,
+          "fiberGram": 2,
+          "sugarGram": 2,
+          "sodiumMilligram": 160,
+          "aiFoodName": "Whole wheat toast",
+          "aiCalories": 95,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Dinner with friends",
+      "imageUri": null,
+      "aiSummary": "AI estimated shared dinner portion.",
+      "createdAt": 1780135500000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20602,
+      "foods": [
+        {
+          "foodName": "Shabu shabu",
+          "description": "Lean beef and vegetables",
+          "imageUri": null,
+          "calories": 430,
+          "carbsGram": 22,
+          "proteinGram": 42,
+          "fatGram": 18,
+          "fiberGram": 6,
+          "sugarGram": 8,
+          "sodiumMilligram": 1050,
+          "aiFoodName": "Shabu shabu",
+          "aiCalories": 430,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Rice small bowl",
+          "description": "Small rice",
+          "imageUri": null,
+          "calories": 190,
+          "carbsGram": 42,
+          "proteinGram": 4,
+          "fatGram": 0,
+          "fiberGram": 1,
+          "sugarGram": 0,
+          "sodiumMilligram": 8,
+          "aiFoodName": "Rice small bowl",
+          "aiCalories": 190,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Before workout",
+      "imageUri": null,
+      "aiSummary": "AI estimated pre-workout snack meal.",
+      "createdAt": 1780443000000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20606,
+      "foods": [
+        {
+          "foodName": "Protein bar",
+          "description": "One bar",
+          "imageUri": null,
+          "calories": 210,
+          "carbsGram": 22,
+          "proteinGram": 20,
+          "fatGram": 7,
+          "fiberGram": 5,
+          "sugarGram": 5,
+          "sodiumMilligram": 180,
+          "aiFoodName": "Protein bar",
+          "aiCalories": 210,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Apple",
+          "description": "One medium",
+          "imageUri": null,
+          "calories": 95,
+          "carbsGram": 25,
+          "proteinGram": 0,
+          "fatGram": 0,
+          "fiberGram": 4,
+          "sugarGram": 19,
+          "sodiumMilligram": 2,
+          "aiFoodName": "Apple",
+          "aiCalories": 95,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Home dinner",
+      "imageUri": null,
+      "aiSummary": "AI estimated chicken dinner.",
+      "createdAt": 1780480500000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20606,
+      "foods": [
+        {
+          "foodName": "Dakgalbi lettuce wraps",
+          "description": "Chicken stir-fry with lettuce",
+          "imageUri": null,
+          "calories": 460,
+          "carbsGram": 32,
+          "proteinGram": 38,
+          "fatGram": 19,
+          "fiberGram": 6,
+          "sugarGram": 10,
+          "sodiumMilligram": 970,
+          "aiFoodName": "Dakgalbi lettuce wraps",
+          "aiCalories": 460,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Today breakfast",
+      "imageUri": null,
+      "aiSummary": "AI estimated light breakfast.",
+      "createdAt": 1780701000000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20609,
+      "foods": [
+        {
+          "foodName": "Greek yogurt",
+          "description": "Plain yogurt",
+          "imageUri": null,
+          "calories": 130,
+          "carbsGram": 10,
+          "proteinGram": 17,
+          "fatGram": 3,
+          "fiberGram": 0,
+          "sugarGram": 6,
+          "sodiumMilligram": 65,
+          "aiFoodName": "Greek yogurt",
+          "aiCalories": 130,
+          "confidence": 0.86
+        },
+        {
+          "foodName": "Strawberries",
+          "description": "One cup",
+          "imageUri": null,
+          "calories": 50,
+          "carbsGram": 12,
+          "proteinGram": 1,
+          "fatGram": 0,
+          "fiberGram": 3,
+          "sugarGram": 7,
+          "sodiumMilligram": 2,
+          "aiFoodName": "Strawberries",
+          "aiCalories": 50,
+          "confidence": 0.86
+        }
+      ]
+    },
+    {
+      "memo": "Today lunch",
+      "imageUri": null,
+      "aiSummary": "AI estimated a lean lunch bowl.",
+      "createdAt": 1780717200000,
+      "timeZoneId": "Asia/Seoul",
+      "localDateEpochDay": 20609,
+      "foods": [
+        {
+          "foodName": "Chicken salad bowl",
+          "description": "Chicken, greens, quinoa",
+          "imageUri": null,
+          "calories": 420,
+          "carbsGram": 42,
+          "proteinGram": 36,
+          "fatGram": 13,
+          "fiberGram": 8,
+          "sugarGram": 7,
+          "sodiumMilligram": 650,
+          "aiFoodName": "Chicken salad bowl",
+          "aiCalories": 420,
+          "confidence": 0.86
+        }
+      ]
+    }
+  ]
+}

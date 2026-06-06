@@ -41,12 +41,8 @@ import com.jaewonlee.aidietrecord.data.model.BodyMeasurementDraft
 import com.jaewonlee.aidietrecord.data.model.BodyMeasurementEntity
 import com.jaewonlee.aidietrecord.data.model.GoalPlanDraft
 import com.jaewonlee.aidietrecord.data.model.GoalPlanEntity
-import com.jaewonlee.aidietrecord.ui.theme.AppOutline
 import com.jaewonlee.aidietrecord.ui.theme.AppPrimary
 import com.jaewonlee.aidietrecord.ui.theme.AppSuccess
-import com.jaewonlee.aidietrecord.ui.theme.AppSurface
-import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceSoft
-import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import com.jaewonlee.aidietrecord.ui.theme.AppWarning
 import com.jaewonlee.aidietrecord.ui.theme.MacroCarb
 import com.jaewonlee.aidietrecord.ui.theme.MacroFat
@@ -64,7 +60,6 @@ private val GoalProgressColor = AppPrimary
 private val WeightProgressColor = AppSuccess
 private val MuscleProgressColor = MacroCarb
 private val BodyFatProgressColor = MacroFat
-private val GoalTrackColor = AppOutline
 
 @Composable
 fun GoalSettingsScreen(
@@ -374,7 +369,7 @@ fun GoalSettingsScreen(
                     Text(
                         text = latestBodyMeasurement.summaryText(),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = AppTextMuted
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     OutlinedButton(
                         onClick = {
@@ -528,7 +523,7 @@ fun GoalSettingsScreen(
                     Text(
                         text = nutritionPlan.summary,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = AppTextMuted
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     NutritionPlanRow("Calories", "${nutritionPlan.calories} kcal")
                     NutritionPlanRow(
@@ -703,7 +698,7 @@ private fun GoalProgressOverview(
         Text(
             text = "$startDateText ~ $endDateText",
             style = MaterialTheme.typography.bodyMedium,
-            color = AppTextMuted
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         GoalProgressLabel(
             label = "Period",
@@ -718,7 +713,7 @@ private fun GoalProgressOverview(
             Text(
                 text = goalPlan.planSummary,
                 style = MaterialTheme.typography.bodyMedium,
-                color = AppTextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -728,7 +723,7 @@ private fun GoalProgressOverview(
             Text(
                 text = "Last body status: $measuredDate",
                 style = MaterialTheme.typography.bodyMedium,
-                color = AppTextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         GoalTargetProgressRow(
@@ -784,7 +779,12 @@ private fun GoalProgressOverview(
         GoalFieldRow {
             GoalMetricCard("Fiber", "${goalPlan.dailyFiberGram}g", WeightProgressColor, Modifier.weight(1f))
             GoalMetricCard("Sugar", "${goalPlan.dailySugarGram}g", AppWarning, Modifier.weight(1f))
-            GoalMetricCard("Sodium", "${goalPlan.dailySodiumMilligram}mg", AppTextMuted, Modifier.weight(1f))
+            GoalMetricCard(
+                "Sodium",
+                "${goalPlan.dailySodiumMilligram}mg",
+                MaterialTheme.colorScheme.onSurfaceVariant,
+                Modifier.weight(1f)
+            )
         }
     }
 
@@ -820,7 +820,7 @@ private fun GoalProposalCard(
             Text(
                 text = "Estimated: $estimatedText",
                 style = MaterialTheme.typography.bodySmall,
-                color = AppTextMuted
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
         Text(
@@ -857,7 +857,7 @@ private fun GoalProgressLabel(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = AppTextMuted
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
@@ -897,7 +897,7 @@ private fun GoalTargetProgressRow(
         Text(
             text = targetGap ?: "Target not set",
             style = MaterialTheme.typography.bodySmall,
-            color = AppTextMuted
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -912,7 +912,7 @@ private fun GoalOverviewProgressBar(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(50))
-            .background(GoalTrackColor)
+            .background(MaterialTheme.colorScheme.outline)
     ) {
         if (progress > 0f) {
             Box(
@@ -931,9 +931,9 @@ private fun GoalCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = AppSurface),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, AppOutline),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -1023,9 +1023,9 @@ private fun BodyMeasurementForm(
             modifier = Modifier.fillMaxWidth()
         )
         Text(
-            text = "Only one value is required. Weight and body fat mass can estimate body fat percent for the AI plan.",
-            style = MaterialTheme.typography.bodySmall,
-            color = AppTextMuted
+                text = "Only one value is required. Weight and body fat mass can estimate body fat percent for the AI plan.",
+                style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         errorMessage?.let { message ->
             Text(
@@ -1155,7 +1155,7 @@ private fun NutritionPlanRow(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyMedium,
-            color = AppTextMuted
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,
@@ -1174,14 +1174,14 @@ private fun GoalMetricCard(
 ) {
     Column(
         modifier = modifier
-            .background(AppSurfaceSoft, RoundedCornerShape(8.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
-            color = AppTextMuted
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Text(
             text = value,

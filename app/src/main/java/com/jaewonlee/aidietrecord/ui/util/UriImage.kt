@@ -24,8 +24,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.jaewonlee.aidietrecord.ui.theme.AppSurfaceTonal
-import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -55,14 +53,14 @@ fun UriImage(
     Box(
         modifier = modifier
             .clip(shape)
-            .background(AppSurfaceTonal, shape),
+            .background(MaterialTheme.colorScheme.secondaryContainer, shape),
         contentAlignment = Alignment.Center
     ) {
         val bitmap = imageBitmap
         if (bitmap == null) {
             Text(
                 text = placeholderText,
-                color = AppTextMuted,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
                 style = MaterialTheme.typography.bodyMedium
             )
         } else {

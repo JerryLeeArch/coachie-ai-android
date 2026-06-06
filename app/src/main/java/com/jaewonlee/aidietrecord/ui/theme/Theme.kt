@@ -1,6 +1,5 @@
 package com.jaewonlee.aidietrecord.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -13,13 +12,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
-    surface = Color(0xFF111827),
-    background = Color(0xFF020617),
-    onSurface = Color(0xFFE5E7EB),
-    onBackground = Color(0xFFE5E7EB)
+    primary = Color(0xFF63CFA0),
+    onPrimary = Color(0xFF0B1F16),
+    primaryContainer = Color(0xFF183E2E),
+    onPrimaryContainer = Color(0xFFD9F8E8),
+    secondary = Color(0xFF8FCFB4),
+    onSecondary = Color(0xFF0F2118),
+    secondaryContainer = Color(0xFF24382E),
+    onSecondaryContainer = Color(0xFFDDF2E7),
+    tertiary = Color(0xFFD8B16C),
+    onTertiary = Color(0xFF261A08),
+    tertiaryContainer = Color(0xFF49361A),
+    onTertiaryContainer = Color(0xFFFFE6B6),
+    background = Color(0xFF101310),
+    onBackground = Color(0xFFECEFEC),
+    surface = Color(0xFF171A17),
+    onSurface = Color(0xFFECEFEC),
+    surfaceVariant = Color(0xFF242820),
+    onSurfaceVariant = Color(0xFFB7C0B3),
+    outline = Color(0xFF444C41),
+    errorContainer = Color(0xFF5A211F)
 )
 
 private val LightColorScheme = lightColorScheme(
