@@ -39,6 +39,9 @@ import androidx.compose.ui.unit.dp
 import com.jaewonlee.aidietrecord.data.model.MealFoodDraft
 import com.jaewonlee.aidietrecord.data.model.MealRecord
 import com.jaewonlee.aidietrecord.data.model.MealUploadDraft
+import com.jaewonlee.aidietrecord.data.model.currentTimeZoneId
+import com.jaewonlee.aidietrecord.data.model.localDateEpochDay
+import com.jaewonlee.aidietrecord.data.model.zoneIdOrSystemDefault
 import com.jaewonlee.aidietrecord.ui.theme.AppOutline
 import com.jaewonlee.aidietrecord.ui.theme.AppSurface
 import com.jaewonlee.aidietrecord.ui.theme.AppTextMuted
@@ -67,11 +70,18 @@ fun AddMealScreen(
     var nextDraftId by remember(initialMeal?.id) {
         mutableStateOf((foodDrafts.maxOfOrNull { it.id } ?: 0L) + 1L)
     }
+    val initialMealTimeZoneId = initialMeal?.timeZoneId ?: currentTimeZoneId()
     var mealDateText by remember(initialMeal?.id, initialMeal?.createdAt) {
-        mutableStateOf((initialMeal?.createdAt ?: System.currentTimeMillis()).toMealEditDateText())
+        mutableStateOf(
+            (initialMeal?.createdAt ?: System.currentTimeMillis())
+                .toMealEditDateText(initialMealTimeZoneId)
+        )
     }
     var mealTimeText by remember(initialMeal?.id, initialMeal?.createdAt) {
-        mutableStateOf((initialMeal?.createdAt ?: System.currentTimeMillis()).toMealEditTimeText())
+        mutableStateOf(
+            (initialMeal?.createdAt ?: System.currentTimeMillis())
+                .toMealEditTimeText(initialMealTimeZoneId)
+        )
     }
     var errorMessage by remember(initialMeal?.id) { mutableStateOf<String?>(null) }
 
@@ -212,9 +222,11 @@ fun AddMealScreen(
                         else -> null
                     }
 
+                    val editedTimeZoneId = initialMeal?.timeZoneId ?: currentTimeZoneId()
                     val editedCreatedAt = parseMealDateTime(
                         dateText = mealDateText,
-                        timeText = mealTimeText
+                        timeText = mealTimeText,
+                        timeZoneId = editedTimeZoneId
                     )
                     if (errorMessage == null && editedCreatedAt == null) {
                         errorMessage = "Enter a valid meal date and time."
@@ -229,6 +241,11 @@ fun AddMealScreen(
                                 memo = foods.toMealMemo(initialMeal?.memo.orEmpty()),
                                 imageUri = foods.firstNotNullOfOrNull { it.imageUri },
                                 createdAt = editedCreatedAt,
+                                timeZoneId = editedTimeZoneId,
+                                localDateEpochDay = localDateEpochDay(
+                                    createdAt = editedCreatedAt,
+                                    timeZoneId = editedTimeZoneId
+                                ),
                                 foods = foods
                             )
                         )
@@ -356,11 +373,18 @@ private fun SingleMealCaptureScreen(
                     if (trimmedNotes.isBlank() && mealImageUri == null) {
                         errorMessage = "Add a photo or describe the meal."
                     } else {
+                        val createdAt = System.currentTimeMillis()
+                        val timeZoneId = currentTimeZoneId()
                         onSaveClick(
                             MealUploadDraft(
                                 memo = trimmedNotes,
                                 imageUri = mealImageUri,
-                                createdAt = System.currentTimeMillis(),
+                                createdAt = createdAt,
+                                timeZoneId = timeZoneId,
+                                localDateEpochDay = localDateEpochDay(
+                                    createdAt = createdAt,
+                                    timeZoneId = timeZoneId
+                                ),
                                 foods = listOf(
                                     MealFoodDraft(
                                         foodName = "",
@@ -734,28 +758,29 @@ private fun String.toNullableInt(): Int? {
     return trim().takeIf { it.isNotBlank() }?.toIntOrNull()
 }
 
-private fun Long.toMealEditDateText(): String {
+private fun Long.toMealEditDateText(timeZoneId: String): String {
     return Instant.ofEpochMilli(this)
-        .atZone(ZoneId.systemDefault())
+        .atZone(zoneIdOrSystemDefault(timeZoneId))
         .toLocalDate()
         .format(mealEditDateFormatter)
 }
 
-private fun Long.toMealEditTimeText(): String {
+private fun Long.toMealEditTimeText(timeZoneId: String): String {
     return Instant.ofEpochMilli(this)
-        .atZone(ZoneId.systemDefault())
+        .atZone(zoneIdOrSystemDefault(timeZoneId))
         .toLocalTime()
         .format(mealEditTimeFormatter)
 }
 
 private fun parseMealDateTime(
     dateText: String,
-    timeText: String
+    timeText: String,
+    timeZoneId: String
 ): Long? {
     val date = parseMealDate(dateText) ?: return null
     val time = parseMealTime(timeText) ?: return null
     return LocalDateTime.of(date, time)
-        .atZone(ZoneId.systemDefault())
+        .atZone(zoneIdOrSystemDefault(timeZoneId))
         .toInstant()
         .toEpochMilli()
 }

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -62,7 +66,7 @@ import com.jaewonlee.aidietrecord.ui.theme.MacroFiber
 import com.jaewonlee.aidietrecord.ui.theme.MacroProtein
 import com.jaewonlee.aidietrecord.ui.theme.MacroSodium
 import com.jaewonlee.aidietrecord.ui.theme.MacroSugar
-import com.jaewonlee.aidietrecord.ui.util.isTodayMeal
+import com.jaewonlee.aidietrecord.ui.util.mealRecordDate
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -80,6 +84,7 @@ private val FatColor = MacroFat
 private val FiberColor = MacroFiber
 private val SugarColor = MacroSugar
 private val SodiumColor = MacroSodium
+private const val IntakeHistoryDays = 3650
 
 data class MealAnalysisNoticeUiState(
     val isAnalyzing: Boolean,
@@ -108,18 +113,15 @@ fun HomeScreen(
     onRetryMealAnalysisClick: () -> Unit,
     onDismissMealAnalysisClick: () -> Unit
 ) {
-    val todayMeals = mealRecords.filter { isTodayMeal(it.createdAt) }
-    val totalCalories = todayMeals.sumOf { it.calories }
-    val totalCarbs = todayMeals.sumOf { it.carbsGram }
-    val totalProtein = todayMeals.sumOf { it.proteinGram }
-    val totalFat = todayMeals.sumOf { it.fatGram }
-    val totalFiber = todayMeals.sumOf { it.fiberGram }
-    val totalSugar = todayMeals.sumOf { it.sugarGram }
-    val totalSodium = todayMeals.sumOf { it.sodiumMilligram }
+    val today = LocalDate.now()
+    val mealsByDate = mealRecords.groupBy { mealRecordDate(it) }
+    val pagerState = rememberPagerState(initialPage = IntakeHistoryDays) {
+        IntakeHistoryDays + 1
+    }
+    val selectedDate = today.minusDays((IntakeHistoryDays - pagerState.currentPage).toLong())
+    val selectedSummary = mealsByDate.summaryForDate(selectedDate)
     val dailyCalories = targetCalories.coerceAtLeast(1)
-    val calorieDelta = dailyCalories - totalCalories
-    val calorieProgress = (totalCalories / dailyCalories.toFloat()).coerceIn(0f, 1f)
-    val todayLabel = LocalDate.now()
+    val todayLabel = today
         .format(DateTimeFormatter.ofPattern("EEEE, MMM d", Locale.ENGLISH))
 
     Scaffold(
@@ -156,20 +158,20 @@ fun HomeScreen(
             }
 
             CalorieHero(
-                totalCalories = totalCalories,
+                today = today,
+                mealsByDate = mealsByDate,
+                pagerState = pagerState,
                 targetCalories = dailyCalories,
-                calorieDelta = calorieDelta,
-                progress = calorieProgress,
                 onMealListClick = onMealListClick
             )
 
             NutritionPanel(
-                carbsGram = totalCarbs,
-                proteinGram = totalProtein,
-                fatGram = totalFat,
-                fiberGram = totalFiber,
-                sugarGram = totalSugar,
-                sodiumMilligram = totalSodium,
+                carbsGram = selectedSummary.carbsGram,
+                proteinGram = selectedSummary.proteinGram,
+                fatGram = selectedSummary.fatGram,
+                fiberGram = selectedSummary.fiberGram,
+                sugarGram = selectedSummary.sugarGram,
+                sodiumMilligram = selectedSummary.sodiumMilligram,
                 targetCarbsGram = targetCarbsGram.coerceAtLeast(1),
                 targetProteinGram = targetProteinGram.coerceAtLeast(1),
                 targetFatGram = targetFatGram.coerceAtLeast(1),
@@ -180,6 +182,37 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
         }
+    }
+}
+
+private data class DailyIntakeSummary(
+    val calories: Int,
+    val carbsGram: Int,
+    val proteinGram: Int,
+    val fatGram: Int,
+    val fiberGram: Int,
+    val sugarGram: Int,
+    val sodiumMilligram: Int
+)
+
+private fun Map<LocalDate, List<MealRecord>>.summaryForDate(date: LocalDate): DailyIntakeSummary {
+    val meals = this[date].orEmpty()
+    return DailyIntakeSummary(
+        calories = meals.sumOf { it.calories },
+        carbsGram = meals.sumOf { it.carbsGram },
+        proteinGram = meals.sumOf { it.proteinGram },
+        fatGram = meals.sumOf { it.fatGram },
+        fiberGram = meals.sumOf { it.fiberGram },
+        sugarGram = meals.sumOf { it.sugarGram },
+        sodiumMilligram = meals.sumOf { it.sodiumMilligram }
+    )
+}
+
+private fun LocalDate.intakeTitle(today: LocalDate): String {
+    return when (this) {
+        today -> "Today's Intake"
+        today.minusDays(1) -> "Yesterday's Intake"
+        else -> format(DateTimeFormatter.ofPattern("EEE, MMM d", Locale.ENGLISH)) + " Intake"
     }
 }
 
@@ -297,7 +330,7 @@ private fun HomeHeader(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(
-                text = "AI Meal Log",
+                text = "Coachie AI",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
@@ -316,20 +349,15 @@ private fun HomeHeader(
 }
 
 @Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun CalorieHero(
-    totalCalories: Int,
+    today: LocalDate,
+    mealsByDate: Map<LocalDate, List<MealRecord>>,
+    pagerState: PagerState,
     targetCalories: Int,
-    calorieDelta: Int,
-    progress: Float,
     onMealListClick: () -> Unit
 ) {
-    val isOverGoal = calorieDelta < 0
-    val statusText = if (isOverGoal) {
-        "Over goal by ${-calorieDelta} kcal"
-    } else {
-        "$calorieDelta kcal left"
-    }
-    val statusColor = if (isOverGoal) AppDanger else AppSuccess
+    val selectedDate = today.minusDays((IntakeHistoryDays - pagerState.currentPage).toLong())
 
     Column(
         modifier = Modifier
@@ -343,7 +371,7 @@ private fun CalorieHero(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Today's Intake",
+                text = selectedDate.intakeTitle(today),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimary
@@ -357,39 +385,68 @@ private fun CalorieHero(
             }
         }
 
-        Row(
+        HorizontalPager(
+            state = pagerState,
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(18.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CalorieGauge(
-                totalCalories = totalCalories,
-                targetCalories = targetCalories,
-                progress = progress,
-                overRatio = ((totalCalories - targetCalories).coerceAtLeast(0) / targetCalories.toFloat())
+            pageSpacing = 16.dp
+        ) { page ->
+            val pageDate = today.minusDays((IntakeHistoryDays - page).toLong())
+            val summary = mealsByDate.summaryForDate(pageDate)
+            CalorieHeroPage(
+                totalCalories = summary.calories,
+                targetCalories = targetCalories
             )
+        }
+    }
+}
 
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Text(
-                    text = statusText,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = statusColor
-                )
-                Text(
-                    text = "$targetCalories kcal daily goal",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = TextMuted
-                )
-                StatusPill(
-                    text = if (isOverGoal) "Over target" else "On pace",
-                    color = statusColor,
-                    containerColor = if (isOverGoal) AppDangerSoft else AppSuccessSoft
-                )
-            }
+@Composable
+private fun CalorieHeroPage(
+    totalCalories: Int,
+    targetCalories: Int
+) {
+    val calorieDelta = targetCalories - totalCalories
+    val calorieProgress = (totalCalories / targetCalories.toFloat()).coerceIn(0f, 1f)
+    val isOverGoal = calorieDelta < 0
+    val statusText = if (isOverGoal) {
+        "Over goal by ${-calorieDelta} kcal"
+    } else {
+        "$calorieDelta kcal left"
+    }
+    val statusColor = if (isOverGoal) AppDanger else AppSuccess
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(18.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        CalorieGauge(
+            totalCalories = totalCalories,
+            targetCalories = targetCalories,
+            progress = calorieProgress,
+            overRatio = ((totalCalories - targetCalories).coerceAtLeast(0) / targetCalories.toFloat())
+        )
+
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Text(
+                text = statusText,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = statusColor
+            )
+            Text(
+                text = "$targetCalories kcal daily goal",
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextMuted
+            )
+            StatusPill(
+                text = if (isOverGoal) "Over target" else "On pace",
+                color = statusColor,
+                containerColor = if (isOverGoal) AppDangerSoft else AppSuccessSoft
+            )
         }
     }
 }

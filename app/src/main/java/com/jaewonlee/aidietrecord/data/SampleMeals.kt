@@ -2,9 +2,12 @@ package com.jaewonlee.aidietrecord.data
 
 import com.jaewonlee.aidietrecord.data.model.MealFoodRecord
 import com.jaewonlee.aidietrecord.data.model.MealRecord
+import com.jaewonlee.aidietrecord.data.model.localDateEpochDay
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
+
+private const val SampleTimeZoneId = "Asia/Seoul"
 
 val sampleMeals = listOf(
     sampleMeal(
@@ -71,6 +74,8 @@ private fun sampleMeal(
         imageUri = null,
         aiSummary = "샘플 데이터로 구성된 식사 기록입니다.",
         createdAt = createdAt,
+        timeZoneId = SampleTimeZoneId,
+        localDateEpochDay = localDateEpochDay(createdAt, SampleTimeZoneId),
         foods = foods
     )
 }
@@ -104,7 +109,7 @@ private fun timestampOf(
     minute: Int
 ): Long {
     return LocalDateTime.of(year, month, day, hour, minute)
-        .atZone(ZoneId.of("Asia/Seoul"))
+        .atZone(ZoneId.of(SampleTimeZoneId))
         .toInstant()
         .toEpochMilli()
 }
@@ -113,9 +118,9 @@ private fun timestampTodayOf(
     hour: Int,
     minute: Int
 ): Long {
-    return LocalDate.now(ZoneId.of("Asia/Seoul"))
+    return LocalDate.now(ZoneId.of(SampleTimeZoneId))
         .atTime(hour, minute)
-        .atZone(ZoneId.of("Asia/Seoul"))
+        .atZone(ZoneId.of(SampleTimeZoneId))
         .toInstant()
         .toEpochMilli()
 }

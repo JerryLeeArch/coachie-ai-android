@@ -7,6 +7,7 @@ sealed class Route(val path: String) {
     data object MealList : Route("mealList")
     data object MealReview : Route("mealReview")
     data object Profile : Route("profile")
+    data object MealLogReminderSettings : Route("mealLogReminderSettings")
     data object GoalSettings : Route("goalSettings")
     data object RecentStats : Route("recentStats")
     data object MealDetail : Route("mealDetail/{mealId}") {

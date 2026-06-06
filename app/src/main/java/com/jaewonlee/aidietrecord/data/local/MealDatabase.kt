@@ -11,6 +11,8 @@ import com.jaewonlee.aidietrecord.data.model.GoalPlanEntity
 import com.jaewonlee.aidietrecord.data.model.MealEntity
 import com.jaewonlee.aidietrecord.data.model.MealFoodEntity
 import com.jaewonlee.aidietrecord.data.model.UserAccount
+import java.time.Instant
+import java.time.ZoneId
 
 @Database(
     entities = [
@@ -20,7 +22,7 @@ import com.jaewonlee.aidietrecord.data.model.UserAccount
         GoalPlanEntity::class,
         BodyMeasurementEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 abstract class MealDatabase : RoomDatabase() {
@@ -44,7 +46,8 @@ abstract class MealDatabase : RoomDatabase() {
                         MIGRATION_5_6,
                         MIGRATION_6_7,
                         MIGRATION_7_8,
-                        MIGRATION_8_9
+                        MIGRATION_8_9,
+                        MIGRATION_9_10
                     )
                     .fallbackToDestructiveMigration(true)
                     .build()
@@ -182,6 +185,30 @@ abstract class MealDatabase : RoomDatabase() {
                     ON user_accounts(firebaseUid)
                     """.trimIndent()
                 )
+            }
+        }
+
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                val zoneId = ZoneId.systemDefault()
+                db.execSQL("ALTER TABLE meals ADD COLUMN timeZoneId TEXT NOT NULL DEFAULT '${zoneId.id}'")
+                db.execSQL("ALTER TABLE meals ADD COLUMN localDateEpochDay INTEGER NOT NULL DEFAULT 0")
+
+                val cursor = db.query("SELECT id, createdAt FROM meals")
+                cursor.use {
+                    while (it.moveToNext()) {
+                        val id = it.getLong(0)
+                        val createdAt = it.getLong(1)
+                        val localDateEpochDay = Instant.ofEpochMilli(createdAt)
+                            .atZone(zoneId)
+                            .toLocalDate()
+                            .toEpochDay()
+                        db.execSQL(
+                            "UPDATE meals SET localDateEpochDay = ? WHERE id = ?",
+                            arrayOf(localDateEpochDay, id)
+                        )
+                    }
+                }
             }
         }
     }

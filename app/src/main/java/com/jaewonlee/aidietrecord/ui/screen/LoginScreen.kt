@@ -48,7 +48,7 @@ fun LoginScreen(
         .takeUnless { hideRemoteMessage }
         ?.takeIf { visibleErrorMessage == null }
 
-    ScreenScaffold(title = "AI Meal Log") { innerPadding ->
+    ScreenScaffold(title = "Coachie AI") { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)

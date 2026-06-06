@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,10 +15,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,7 +42,9 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.jaewonlee.aidietrecord.data.model.BodyMeasurementDraft
 import com.jaewonlee.aidietrecord.data.model.BodyMeasurementEntity
 import com.jaewonlee.aidietrecord.data.model.GoalPlanEntity
 import com.jaewonlee.aidietrecord.data.model.MealRecord
@@ -58,6 +66,7 @@ import com.jaewonlee.aidietrecord.ui.theme.MacroProtein
 import com.jaewonlee.aidietrecord.ui.util.formatMealDate
 import com.jaewonlee.aidietrecord.ui.util.mealRecordDate
 import java.time.LocalDate
+import java.time.format.DateTimeParseException
 import kotlin.math.abs
 import kotlin.math.max
 
@@ -72,6 +81,8 @@ fun RecentStatsScreen(
     targetCarbsGram: Int,
     targetProteinGram: Int,
     targetFatGram: Int,
+    onUpdateBodyMeasurement: (BodyMeasurementEntity, BodyMeasurementDraft) -> Unit,
+    onDeleteBodyMeasurement: (BodyMeasurementEntity) -> Unit,
     onBackClick: () -> Unit
 ) {
     val dailyStats = remember(mealRecords) { mealRecords.toDailyStats() }
@@ -196,7 +207,11 @@ fun RecentStatsScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    BodyProgressPanel(measurements = recentBodyMeasurements)
+                    BodyProgressPanel(
+                        measurements = recentBodyMeasurements,
+                        onUpdateBodyMeasurement = onUpdateBodyMeasurement,
+                        onDeleteBodyMeasurement = onDeleteBodyMeasurement
+                    )
                 }
             }
         }
@@ -508,7 +523,11 @@ private fun NutritionTrendChart(
 }
 
 @Composable
-private fun BodyProgressPanel(measurements: List<BodyMeasurementEntity>) {
+private fun BodyProgressPanel(
+    measurements: List<BodyMeasurementEntity>,
+    onUpdateBodyMeasurement: (BodyMeasurementEntity, BodyMeasurementDraft) -> Unit,
+    onDeleteBodyMeasurement: (BodyMeasurementEntity) -> Unit
+) {
     if (measurements.isEmpty()) {
         EmptyChartText("No body status records yet.")
         return
@@ -519,6 +538,8 @@ private fun BodyProgressPanel(measurements: List<BodyMeasurementEntity>) {
     var showAllMeasurements by rememberSaveable(measurements.size) {
         mutableStateOf(false)
     }
+    var editingMeasurement by remember { mutableStateOf<BodyMeasurementEntity?>(null) }
+    var deletingMeasurement by remember { mutableStateOf<BodyMeasurementEntity?>(null) }
     val displayedMeasurements = if (showAllMeasurements) {
         measurements
     } else {
@@ -550,7 +571,11 @@ private fun BodyProgressPanel(measurements: List<BodyMeasurementEntity>) {
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             displayedMeasurements.forEach { measurement ->
-                BodyMeasurementRow(measurement = measurement)
+                BodyMeasurementRow(
+                    measurement = measurement,
+                    onEditClick = { editingMeasurement = measurement },
+                    onDeleteClick = { deletingMeasurement = measurement }
+                )
             }
             if (hiddenMeasurementCount > 0) {
                 TextButton(
@@ -567,6 +592,44 @@ private fun BodyProgressPanel(measurements: List<BodyMeasurementEntity>) {
                 }
             }
         }
+    }
+
+    editingMeasurement?.let { measurement ->
+        EditBodyMeasurementDialog(
+            measurement = measurement,
+            onDismissRequest = { editingMeasurement = null },
+            onSaveClick = { draft ->
+                onUpdateBodyMeasurement(measurement, draft)
+                editingMeasurement = null
+            }
+        )
+    }
+
+    deletingMeasurement?.let { measurement ->
+        AlertDialog(
+            onDismissRequest = { deletingMeasurement = null },
+            title = { Text("Delete body record?") },
+            text = {
+                Text(
+                    text = "This will remove the ${formatMealDate(LocalDate.ofEpochDay(measurement.measuredEpochDay))} record from Body Progress."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        onDeleteBodyMeasurement(measurement)
+                        deletingMeasurement = null
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(onClick = { deletingMeasurement = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
@@ -671,7 +734,11 @@ private fun BodyMeasurementTrendChart(measurements: List<BodyMeasurementEntity>)
 }
 
 @Composable
-private fun BodyMeasurementRow(measurement: BodyMeasurementEntity) {
+private fun BodyMeasurementRow(
+    measurement: BodyMeasurementEntity,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit
+) {
     val measuredDate = LocalDate.ofEpochDay(measurement.measuredEpochDay)
 
     Column(
@@ -681,18 +748,215 @@ private fun BodyMeasurementRow(measurement: BodyMeasurementEntity) {
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(
-            text = formatMealDate(measuredDate),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = AppTextPrimary
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = formatMealDate(measuredDate),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = AppTextPrimary
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                TextButton(onClick = onEditClick) {
+                    Text("Edit")
+                }
+                TextButton(onClick = onDeleteClick) {
+                    Text("Delete")
+                }
+            }
+        }
         Text(
             text = measurement.bodyMeasurementValuesText(),
             style = MaterialTheme.typography.bodyMedium,
             color = AppTextMuted
         )
     }
+}
+
+@Composable
+private fun EditBodyMeasurementDialog(
+    measurement: BodyMeasurementEntity,
+    onDismissRequest: () -> Unit,
+    onSaveClick: (BodyMeasurementDraft) -> Unit
+) {
+    var measuredDate by rememberSaveable(measurement.id) {
+        mutableStateOf(LocalDate.ofEpochDay(measurement.measuredEpochDay).toString())
+    }
+    var weight by rememberSaveable(measurement.id) {
+        mutableStateOf(measurement.weightKg.toBodyInputText())
+    }
+    var metabolicRate by rememberSaveable(measurement.id) {
+        mutableStateOf(measurement.basalMetabolicRateKcal?.toString().orEmpty())
+    }
+    var muscleMass by rememberSaveable(measurement.id) {
+        mutableStateOf(measurement.muscleMassKg.toBodyInputText())
+    }
+    var bodyFatMass by rememberSaveable(measurement.id) {
+        mutableStateOf(measurement.bodyFatMassKg.toBodyInputText())
+    }
+    var bodyFatPercent by rememberSaveable(measurement.id) {
+        mutableStateOf(measurement.bodyFatPercent.toBodyInputText())
+    }
+    var errorMessage by rememberSaveable(measurement.id) {
+        mutableStateOf<String?>(null)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = { Text("Edit body record") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                BodyDateField(
+                    value = measuredDate,
+                    onValueChange = { measuredDate = it },
+                    isError = errorMessage?.contains("date", ignoreCase = true) == true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                BodyFieldRow {
+                    BodyNumberField(
+                        value = weight,
+                        onValueChange = { weight = it },
+                        label = "Weight",
+                        suffix = "kg",
+                        modifier = Modifier.weight(1f)
+                    )
+                    BodyNumberField(
+                        value = metabolicRate,
+                        onValueChange = { metabolicRate = it.filter(Char::isDigit) },
+                        label = "BMR",
+                        suffix = "kcal",
+                        allowDecimal = false,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                BodyFieldRow {
+                    BodyNumberField(
+                        value = muscleMass,
+                        onValueChange = { muscleMass = it },
+                        label = "Muscle",
+                        suffix = "kg",
+                        modifier = Modifier.weight(1f)
+                    )
+                    BodyNumberField(
+                        value = bodyFatMass,
+                        onValueChange = { bodyFatMass = it },
+                        label = "Fat Mass",
+                        suffix = "kg",
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                BodyNumberField(
+                    value = bodyFatPercent,
+                    onValueChange = { bodyFatPercent = it },
+                    label = "Body Fat",
+                    suffix = "%",
+                    modifier = Modifier.fillMaxWidth()
+                )
+                errorMessage?.let { message ->
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val measuredEpochDay = parseBodyMeasurementEpochDay(measuredDate)
+                    if (measuredEpochDay == null) {
+                        errorMessage = "Use YYYY-MM-DD for the measured date."
+                        return@Button
+                    }
+
+                    val draft = BodyMeasurementDraft(
+                        measuredEpochDay = measuredEpochDay,
+                        weightKg = weight.toPositiveDoubleOrNull(),
+                        muscleMassKg = muscleMass.toPositiveDoubleOrNull(),
+                        basalMetabolicRateKcal = metabolicRate.toPositiveIntOrNull(),
+                        bodyFatMassKg = bodyFatMass.toPositiveDoubleOrNull(),
+                        bodyFatPercent = bodyFatPercent.toNonNegativeDoubleOrNull()
+                    )
+                    if (!draft.hasAnyValue()) {
+                        errorMessage = "Enter at least one body measurement."
+                    } else {
+                        onSaveClick(draft)
+                    }
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismissRequest) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun BodyFieldRow(content: @Composable RowScope.() -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        content = content
+    )
+}
+
+@Composable
+private fun BodyNumberField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    suffix: String,
+    modifier: Modifier = Modifier,
+    allowDecimal: Boolean = true
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = {
+            if (allowDecimal) {
+                onValueChange(filterBodyDecimalInput(it))
+            } else {
+                onValueChange(it.filter(Char::isDigit))
+            }
+        },
+        label = { Text(label) },
+        suffix = { Text(suffix) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = if (allowDecimal) KeyboardType.Decimal else KeyboardType.Number
+        ),
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun BodyDateField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    isError: Boolean,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text("Measured Date") },
+        placeholder = { Text("YYYY-MM-DD") },
+        isError = isError,
+        singleLine = true,
+        supportingText = if (isError) {
+            { Text("Check date") }
+        } else {
+            null
+        },
+        modifier = modifier
+    )
 }
 
 @Composable
@@ -843,7 +1107,7 @@ private data class DailyNutritionStats(
 )
 
 private fun List<MealRecord>.toDailyStats(): List<DailyNutritionStats> {
-    return groupBy { mealRecordDate(it.createdAt) }
+    return groupBy { mealRecordDate(it) }
         .map { (date, meals) ->
             DailyNutritionStats(
                 date = date,
@@ -888,6 +1152,28 @@ private fun normalizeBodyChartValue(
     return ((value - minValue) / (maxValue - minValue)).toFloat().coerceIn(0f, 1f)
 }
 
+private fun parseBodyMeasurementEpochDay(measuredDate: String): Long? {
+    return try {
+        LocalDate.parse(measuredDate.trim()).toEpochDay()
+    } catch (_: DateTimeParseException) {
+        null
+    }
+}
+
+private fun filterBodyDecimalInput(value: String): String {
+    var hasDot = false
+    return value.filter { character ->
+        when {
+            character.isDigit() -> true
+            character == '.' && !hasDot -> {
+                hasDot = true
+                true
+            }
+            else -> false
+        }
+    }
+}
+
 private fun BodyMeasurementEntity.bodyMeasurementValuesText(): String {
     val values = buildList {
         weightKg?.let { add("Weight ${it.formatBodyMetric("kg")}") }
@@ -899,6 +1185,16 @@ private fun BodyMeasurementEntity.bodyMeasurementValuesText(): String {
     return values.joinToString(" · ").ifBlank { "No values saved" }
 }
 
+private fun Double?.toBodyInputText(): String {
+    return this?.let { value ->
+        if (abs(value % 1.0) < 0.0001) {
+            value.toInt().toString()
+        } else {
+            "%.1f".format(value)
+        }
+    }.orEmpty()
+}
+
 private fun Double?.formatBodyMetric(unit: String): String {
     return this?.let { value ->
         val numberText = if (abs(value % 1.0) < 0.0001) {
@@ -908,6 +1204,18 @@ private fun Double?.formatBodyMetric(unit: String): String {
         }
         "$numberText$unit"
     } ?: "-"
+}
+
+private fun String.toPositiveDoubleOrNull(): Double? {
+    return toDoubleOrNull()?.takeIf { it > 0.0 }
+}
+
+private fun String.toNonNegativeDoubleOrNull(): Double? {
+    return toDoubleOrNull()?.takeIf { it >= 0.0 }
+}
+
+private fun String.toPositiveIntOrNull(): Int? {
+    return toIntOrNull()?.takeIf { it > 0 }
 }
 
 private fun List<GoalPlanEntity>.goalFor(date: LocalDate): GoalPlanEntity? {

@@ -5,19 +5,25 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.jaewonlee.aidietrecord.R
 
 @Composable
 fun ProfileScreen(
@@ -32,6 +38,7 @@ fun ProfileScreen(
     isDataTransferInProgress: Boolean,
     onBackClick: () -> Unit,
     onSaveClick: () -> Unit,
+    onMealLogReminderSettingsClick: () -> Unit,
     onPasswordResetClick: () -> Unit,
     onExportDataSelected: (Uri) -> Unit,
     onImportDataSelected: (Uri) -> Unit,
@@ -111,24 +118,47 @@ fun ProfileScreen(
                 Text("Save Profile")
             }
             OutlinedButton(
+                onClick = onMealLogReminderSettingsClick,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                ButtonLabelWithIcon(
+                    text = "Meal Log Reminder Settings",
+                    iconResId = R.drawable.ic_notification_20
+                )
+            }
+            OutlinedButton(
                 onClick = onPasswordResetClick,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Send Password Reset Email")
             }
             OutlinedButton(
-                onClick = { exportLauncher.launch("ai-meal-log-user-data.json") },
+                onClick = { exportLauncher.launch("coachie-ai-user-data.json") },
                 enabled = !isDataTransferInProgress,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (isDataTransferInProgress) "Working..." else "Export User Data")
+                if (isDataTransferInProgress) {
+                    Text("Working...")
+                } else {
+                    ButtonLabelWithIcon(
+                        text = "Export User Data",
+                        iconResId = R.drawable.ic_export_20
+                    )
+                }
             }
             OutlinedButton(
                 onClick = { importLauncher.launch(arrayOf("application/json", "text/*", "*/*")) },
                 enabled = !isDataTransferInProgress,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (isDataTransferInProgress) "Working..." else "Import User Data")
+                if (isDataTransferInProgress) {
+                    Text("Working...")
+                } else {
+                    ButtonLabelWithIcon(
+                        text = "Import User Data",
+                        iconResId = R.drawable.ic_import_20
+                    )
+                }
             }
             OutlinedButton(
                 onClick = onLogoutClick,
@@ -138,4 +168,18 @@ fun ProfileScreen(
             }
         }
     }
+}
+
+@Composable
+private fun ButtonLabelWithIcon(
+    text: String,
+    iconResId: Int
+) {
+    Text(text)
+    Spacer(modifier = Modifier.width(8.dp))
+    Icon(
+        painter = painterResource(iconResId),
+        contentDescription = null,
+        modifier = Modifier.size(18.dp)
+    )
 }

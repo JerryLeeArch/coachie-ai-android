@@ -81,6 +81,8 @@ class MealReviewRepository(
                 reviewedFoodCount = reviewedFoods.size
             ),
             createdAt = draft.createdAt,
+            timeZoneId = draft.timeZoneId,
+            localDateEpochDay = draft.localDateEpochDay,
             foods = reviewedFoods
         )
     }

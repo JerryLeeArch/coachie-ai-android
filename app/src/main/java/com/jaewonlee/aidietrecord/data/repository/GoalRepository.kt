@@ -41,6 +41,29 @@ class GoalRepository(
         )
     }
 
+    suspend fun updateBodyMeasurement(
+        ownerId: Long,
+        measurement: BodyMeasurementEntity,
+        draft: BodyMeasurementDraft
+    ) {
+        require(measurement.ownerId == ownerId) { "Body measurement owner mismatch." }
+        require(draft.hasAnyValue()) { "Enter at least one body measurement." }
+        goalDao.updateBodyMeasurement(
+            measurement.copy(
+                measuredEpochDay = draft.measuredEpochDay,
+                weightKg = draft.weightKg,
+                muscleMassKg = draft.muscleMassKg,
+                basalMetabolicRateKcal = draft.basalMetabolicRateKcal,
+                bodyFatMassKg = draft.bodyFatMassKg,
+                bodyFatPercent = draft.bodyFatPercent
+            )
+        )
+    }
+
+    suspend fun deleteBodyMeasurement(ownerId: Long, measurementId: Long) {
+        goalDao.deleteBodyMeasurement(ownerId, measurementId)
+    }
+
     suspend fun saveGoalPlan(ownerId: Long, draft: GoalPlanDraft) {
         val now = System.currentTimeMillis()
         val validToEpochDay = draft.validToEpochDay

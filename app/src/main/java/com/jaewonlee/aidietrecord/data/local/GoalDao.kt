@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import com.jaewonlee.aidietrecord.data.model.BodyMeasurementEntity
 import com.jaewonlee.aidietrecord.data.model.GoalPlanEntity
 import kotlinx.coroutines.flow.Flow
@@ -83,6 +84,12 @@ interface GoalDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBodyMeasurement(bodyMeasurement: BodyMeasurementEntity): Long
+
+    @Update
+    suspend fun updateBodyMeasurement(bodyMeasurement: BodyMeasurementEntity)
+
+    @Query("DELETE FROM body_measurements WHERE id = :measurementId AND ownerId = :ownerId")
+    suspend fun deleteBodyMeasurement(ownerId: Long, measurementId: Long)
 
     @Query("DELETE FROM goal_plans WHERE ownerId = :ownerId")
     suspend fun deleteGoalPlansForOwner(ownerId: Long)

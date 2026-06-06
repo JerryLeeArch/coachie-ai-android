@@ -122,7 +122,7 @@ fun MealDetailScreen(
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = "Logged at: ${formatMealDateTime(mealRecord.createdAt)}",
+                        text = "Logged at: ${formatMealDateTime(mealRecord)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = AppTextMuted
                     )

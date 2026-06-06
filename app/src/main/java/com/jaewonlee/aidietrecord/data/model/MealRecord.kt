@@ -6,6 +6,9 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 @Entity(
     tableName = "meals",
@@ -18,7 +21,9 @@ data class MealEntity(
     val memo: String,
     val imageUri: String?,
     val aiSummary: String?,
-    val createdAt: Long
+    val createdAt: Long,
+    val timeZoneId: String = currentTimeZoneId(),
+    val localDateEpochDay: Long = localDateEpochDay(createdAt, timeZoneId)
 )
 
 @Entity(
@@ -68,6 +73,8 @@ data class MealRecord(
     val imageUri: String?,
     val aiSummary: String?,
     val createdAt: Long,
+    val timeZoneId: String = currentTimeZoneId(),
+    val localDateEpochDay: Long = localDateEpochDay(createdAt, timeZoneId),
     val foods: List<MealFoodRecord>
 ) {
     val foodName: String
@@ -132,6 +139,8 @@ data class MealUploadDraft(
     val memo: String,
     val imageUri: String?,
     val createdAt: Long,
+    val timeZoneId: String = currentTimeZoneId(),
+    val localDateEpochDay: Long = localDateEpochDay(createdAt, timeZoneId),
     val foods: List<MealFoodDraft>
 )
 
@@ -156,6 +165,8 @@ fun MealWithFoods.toMealRecord(): MealRecord {
         imageUri = meal.imageUri,
         aiSummary = meal.aiSummary,
         createdAt = meal.createdAt,
+        timeZoneId = meal.timeZoneId,
+        localDateEpochDay = meal.localDateEpochDay,
         foods = foods
             .sortedBy { it.id }
             .map { it.toMealFoodRecord() }
@@ -169,8 +180,30 @@ fun MealRecord.toMealEntity(): MealEntity {
         memo = memo,
         imageUri = imageUri,
         aiSummary = aiSummary,
-        createdAt = createdAt
+        createdAt = createdAt,
+        timeZoneId = timeZoneId,
+        localDateEpochDay = localDateEpochDay
     )
+}
+
+fun MealRecord.localDate(): LocalDate {
+    return LocalDate.ofEpochDay(localDateEpochDay)
+}
+
+fun localDateEpochDay(createdAt: Long, timeZoneId: String): Long {
+    return Instant.ofEpochMilli(createdAt)
+        .atZone(zoneIdOrSystemDefault(timeZoneId))
+        .toLocalDate()
+        .toEpochDay()
+}
+
+fun currentTimeZoneId(): String {
+    return ZoneId.systemDefault().id
+}
+
+fun zoneIdOrSystemDefault(timeZoneId: String): ZoneId {
+    return runCatching { ZoneId.of(timeZoneId) }
+        .getOrDefault(ZoneId.systemDefault())
 }
 
 fun MealFoodRecord.toMealFoodEntity(mealId: Long): MealFoodEntity {

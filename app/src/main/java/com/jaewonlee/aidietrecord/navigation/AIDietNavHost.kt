@@ -1,5 +1,7 @@
 package com.jaewonlee.aidietrecord.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -9,6 +11,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -17,6 +20,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.jaewonlee.aidietrecord.data.ai.GeminiMealAnalyzer
 import com.jaewonlee.aidietrecord.data.local.AuthSessionStore
+import com.jaewonlee.aidietrecord.data.local.MealLogReminderSettings
+import com.jaewonlee.aidietrecord.data.local.MealLogReminderSettingsStore
 import com.jaewonlee.aidietrecord.data.local.MealDatabase
 import com.jaewonlee.aidietrecord.data.model.GoalPlanEntity
 import com.jaewonlee.aidietrecord.data.model.MealRecord
@@ -28,18 +33,23 @@ import com.jaewonlee.aidietrecord.data.repository.MealReviewRepository
 import com.jaewonlee.aidietrecord.data.repository.MealRepository
 import com.jaewonlee.aidietrecord.data.repository.UserDataPortabilityRepository
 import com.jaewonlee.aidietrecord.ui.screen.AddMealScreen
+import com.jaewonlee.aidietrecord.ui.screen.CoachieStartingScreen
 import com.jaewonlee.aidietrecord.ui.screen.GoalSettingsScreen
 import com.jaewonlee.aidietrecord.ui.screen.HomeScreen
 import com.jaewonlee.aidietrecord.ui.screen.LoginScreen
 import com.jaewonlee.aidietrecord.ui.screen.MealAnalysisNoticeUiState
 import com.jaewonlee.aidietrecord.ui.screen.MealDetailScreen
 import com.jaewonlee.aidietrecord.ui.screen.MealListScreen
+import com.jaewonlee.aidietrecord.ui.screen.MealLogReminderSettingsScreen
 import com.jaewonlee.aidietrecord.ui.screen.MealReviewScreen
 import com.jaewonlee.aidietrecord.ui.screen.ProfileScreen
 import com.jaewonlee.aidietrecord.ui.screen.RecentStatsScreen
 import java.time.LocalDate
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+
+private const val StartingScreenMinDurationMillis = 650L
 
 @Composable
 fun AIDietNavHost() {
@@ -47,6 +57,9 @@ fun AIDietNavHost() {
     val context = LocalContext.current
     val authSessionStore = remember(context.applicationContext) {
         AuthSessionStore(context.applicationContext)
+    }
+    val mealLogReminderSettingsStore = remember(context.applicationContext) {
+        MealLogReminderSettingsStore(context.applicationContext)
     }
     val mealDatabase = remember(context.applicationContext) {
         MealDatabase.getDatabase(context.applicationContext)
@@ -129,6 +142,7 @@ fun AIDietNavHost() {
     var profileErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var profileInfoMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var dataTransferInProgress by rememberSaveable { mutableStateOf(false) }
+    var mealLogReminderSettings by remember { mutableStateOf(MealLogReminderSettings()) }
     val defaultGoalStartDate = remember { LocalDate.now().toString() }
     val defaultGoalEndDate = remember { LocalDate.now().plusWeeks(8).minusDays(1).toString() }
     var goalStartDate by rememberSaveable { mutableStateOf(defaultGoalStartDate) }
@@ -153,6 +167,7 @@ fun AIDietNavHost() {
     var mealSaveInProgress by rememberSaveable { mutableStateOf(false) }
     var pendingMealReview by remember { mutableStateOf<PendingMealReviewState?>(null) }
     var authRestoreCompleted by rememberSaveable { mutableStateOf(false) }
+    var authTransitionInProgress by rememberSaveable { mutableStateOf(false) }
 
     val setCurrentUser: (UserAccount?) -> Unit = { userAccount ->
         currentUserId = userAccount?.id ?: 0L
@@ -164,6 +179,7 @@ fun AIDietNavHost() {
     }
 
     LaunchedEffect(Unit) {
+        val startedAt = System.currentTimeMillis()
         val signedInUser = authRepository.getSignedInUser()
         if (signedInUser == null) {
             authSessionStore.clear()
@@ -180,7 +196,12 @@ fun AIDietNavHost() {
             authErrorMessage = null
             authInfoMessage = null
         }
+        delayRemainingStartingScreenTime(startedAt)
         authRestoreCompleted = true
+    }
+
+    LaunchedEffect(currentUserId) {
+        mealLogReminderSettings = mealLogReminderSettingsStore.load(currentUserId)
     }
 
     LaunchedEffect(activeGoalPlan?.id) {
@@ -208,6 +229,7 @@ fun AIDietNavHost() {
     }
 
     if (!authRestoreCompleted) {
+        CoachieStartingScreen()
         return
     }
 
@@ -255,123 +277,138 @@ fun AIDietNavHost() {
         }
     }
 
-    NavHost(
-        navController = navController,
-        startDestination = if (currentUserId > 0L) Route.Home.path else Route.Login.path
-    ) {
-        composable(Route.Login.path) {
-            LoginScreen(
-                errorMessage = authErrorMessage,
-                infoMessage = authInfoMessage,
-                onLoginClick = { loginId, loginPassword ->
-                    coroutineScope.launch {
-                        authRepository
-                            .login(loginId, loginPassword)
-                            .onSuccess { userAccount ->
-                                authSessionStore.saveUserId(userAccount.id)
-                                setCurrentUser(userAccount)
-                                nickname = userAccount.nickname
-                                userId = userAccount.userId
-                                password = ""
-                                currentMetabolicRate = ""
-                                authErrorMessage = null
-                                authInfoMessage = null
-                                navController.navigate(Route.Home.path) {
-                                    popUpTo(Route.Login.path) { inclusive = true }
+    Box(modifier = Modifier.fillMaxSize()) {
+        NavHost(
+            navController = navController,
+            startDestination = if (currentUserId > 0L) Route.Home.path else Route.Login.path
+        ) {
+            composable(Route.Login.path) {
+                LoginScreen(
+                    errorMessage = authErrorMessage,
+                    infoMessage = authInfoMessage,
+                    onLoginClick = { loginId, loginPassword ->
+                        coroutineScope.launch {
+                            authTransitionInProgress = true
+                            val startedAt = System.currentTimeMillis()
+                            try {
+                                authRepository
+                                    .login(loginId, loginPassword)
+                                    .onSuccess { userAccount ->
+                                        authSessionStore.saveUserId(userAccount.id)
+                                        setCurrentUser(userAccount)
+                                        nickname = userAccount.nickname
+                                        userId = userAccount.userId
+                                        password = ""
+                                        currentMetabolicRate = ""
+                                        authErrorMessage = null
+                                        authInfoMessage = null
+                                        navController.navigate(Route.Home.path) {
+                                            popUpTo(Route.Login.path) { inclusive = true }
+                                        }
+                                    }
+                                    .onFailure { throwable ->
+                                        authInfoMessage = null
+                                        authErrorMessage = throwable.message
+                                            ?: "The email or password is incorrect."
+                                    }
+                            } finally {
+                                delayRemainingStartingScreenTime(startedAt)
+                                authTransitionInProgress = false
+                            }
+                        }
+                    },
+                    onRegisterClick = { loginId, registerNickname, loginPassword ->
+                        coroutineScope.launch {
+                            authTransitionInProgress = true
+                            val startedAt = System.currentTimeMillis()
+                            try {
+                                authRepository
+                                    .register(
+                                        userId = loginId,
+                                        nickname = registerNickname,
+                                        password = loginPassword
+                                    )
+                                    .onSuccess { userAccount ->
+                                        authSessionStore.saveUserId(userAccount.id)
+                                        setCurrentUser(userAccount)
+                                        nickname = userAccount.nickname
+                                        userId = userAccount.userId
+                                        password = ""
+                                        currentMetabolicRate = ""
+                                        authErrorMessage = null
+                                        authInfoMessage = null
+                                        navController.navigate(Route.Home.path) {
+                                            popUpTo(Route.Login.path) { inclusive = true }
+                                        }
+                                    }
+                                    .onFailure { throwable ->
+                                        authInfoMessage = null
+                                        authErrorMessage = throwable.message ?: "Registration failed."
+                                    }
+                            } finally {
+                                delayRemainingStartingScreenTime(startedAt)
+                                authTransitionInProgress = false
+                            }
+                        }
+                    },
+                    onPasswordResetClick = { loginId ->
+                        coroutineScope.launch {
+                            authRepository
+                                .sendPasswordResetEmail(loginId)
+                                .onSuccess {
+                                    authErrorMessage = null
+                                    authInfoMessage = "Password reset email sent."
                                 }
-                            }
-                            .onFailure { throwable ->
-                                authInfoMessage = null
-                                authErrorMessage = throwable.message
-                                    ?: "The email or password is incorrect."
-                            }
-                    }
-                },
-                onRegisterClick = { loginId, registerNickname, loginPassword ->
-                    coroutineScope.launch {
-                        authRepository
-                            .register(
-                                userId = loginId,
-                                nickname = registerNickname,
-                                password = loginPassword
-                            )
-                            .onSuccess { userAccount ->
-                                authSessionStore.saveUserId(userAccount.id)
-                                setCurrentUser(userAccount)
-                                nickname = userAccount.nickname
-                                userId = userAccount.userId
-                                password = ""
-                                currentMetabolicRate = ""
-                                authErrorMessage = null
-                                authInfoMessage = null
-                                navController.navigate(Route.Home.path) {
-                                    popUpTo(Route.Login.path) { inclusive = true }
+                                .onFailure { throwable ->
+                                    authInfoMessage = null
+                                    authErrorMessage = throwable.message
+                                        ?: "Password reset failed."
                                 }
-                            }
-                            .onFailure { throwable ->
-                                authInfoMessage = null
-                                authErrorMessage = throwable.message ?: "Registration failed."
-                            }
+                        }
                     }
-                },
-                onPasswordResetClick = { loginId ->
-                    coroutineScope.launch {
-                        authRepository
-                            .sendPasswordResetEmail(loginId)
-                            .onSuccess {
-                                authErrorMessage = null
-                                authInfoMessage = "Password reset email sent."
-                            }
-                            .onFailure { throwable ->
-                                authInfoMessage = null
-                                authErrorMessage = throwable.message
-                                    ?: "Password reset failed."
-                            }
-                    }
-                }
-            )
-        }
+                )
+            }
 
-        composable(Route.Home.path) {
-            HomeScreen(
-                nickname = nickname,
-                mealRecords = mealRecords,
-                mealAnalysisNotice = pendingMealReview?.let { pendingReview ->
-                    MealAnalysisNoticeUiState(
-                        isAnalyzing = pendingReview.isAnalyzing,
-                        reviewedMeal = pendingReview.reviewedMeal,
-                        errorMessage = pendingReview.errorMessage
-                    )
-                },
-                targetCalories = activeGoalPlan?.dailyCalories
-                    ?: targetCalories.toPositiveIntOrDefault(2000),
-                targetCarbsGram = activeGoalPlan?.dailyCarbsGram
-                    ?: targetCarbsGram.toPositiveIntOrDefault(250),
-                targetProteinGram = activeGoalPlan?.dailyProteinGram
-                    ?: proteinGoal.toPositiveIntOrDefault(100),
-                targetFatGram = activeGoalPlan?.dailyFatGram
-                    ?: targetFatGram.toPositiveIntOrDefault(60),
-                targetFiberGram = activeGoalPlan?.dailyFiberGram
-                    ?: targetFiberGram.toPositiveIntOrDefault(25),
-                targetSugarGram = activeGoalPlan?.dailySugarGram
-                    ?: targetSugarGram.toPositiveIntOrDefault(50),
-                targetSodiumMilligram = activeGoalPlan?.dailySodiumMilligram
-                    ?: targetSodiumMilligram.toPositiveIntOrDefault(2300),
-                onAddMealClick = { navController.navigate(Route.AddMeal.path) },
-                onMealListClick = { navController.navigate(Route.MealList.path) },
-                onGoalSettingsClick = { navController.navigate(Route.GoalSettings.path) },
-                onRecentStatsClick = { navController.navigate(Route.RecentStats.path) },
-                onProfileClick = { navController.navigate(Route.Profile.path) },
-                onReviewMealClick = { navController.navigate(Route.MealReview.path) },
-                onRetryMealAnalysisClick = {
-                    pendingMealReview?.draft?.let(startMealAnalysis)
-                },
-                onDismissMealAnalysisClick = {
-                    pendingMealReview = null
-                    mealSaveInProgress = false
-                }
-            )
-        }
+            composable(Route.Home.path) {
+                HomeScreen(
+                    nickname = nickname,
+                    mealRecords = mealRecords,
+                    mealAnalysisNotice = pendingMealReview?.let { pendingReview ->
+                        MealAnalysisNoticeUiState(
+                            isAnalyzing = pendingReview.isAnalyzing,
+                            reviewedMeal = pendingReview.reviewedMeal,
+                            errorMessage = pendingReview.errorMessage
+                        )
+                    },
+                    targetCalories = activeGoalPlan?.dailyCalories
+                        ?: targetCalories.toPositiveIntOrDefault(2000),
+                    targetCarbsGram = activeGoalPlan?.dailyCarbsGram
+                        ?: targetCarbsGram.toPositiveIntOrDefault(250),
+                    targetProteinGram = activeGoalPlan?.dailyProteinGram
+                        ?: proteinGoal.toPositiveIntOrDefault(100),
+                    targetFatGram = activeGoalPlan?.dailyFatGram
+                        ?: targetFatGram.toPositiveIntOrDefault(60),
+                    targetFiberGram = activeGoalPlan?.dailyFiberGram
+                        ?: targetFiberGram.toPositiveIntOrDefault(25),
+                    targetSugarGram = activeGoalPlan?.dailySugarGram
+                        ?: targetSugarGram.toPositiveIntOrDefault(50),
+                    targetSodiumMilligram = activeGoalPlan?.dailySodiumMilligram
+                        ?: targetSodiumMilligram.toPositiveIntOrDefault(2300),
+                    onAddMealClick = { navController.navigate(Route.AddMeal.path) },
+                    onMealListClick = { navController.navigate(Route.MealList.path) },
+                    onGoalSettingsClick = { navController.navigate(Route.GoalSettings.path) },
+                    onRecentStatsClick = { navController.navigate(Route.RecentStats.path) },
+                    onProfileClick = { navController.navigate(Route.Profile.path) },
+                    onReviewMealClick = { navController.navigate(Route.MealReview.path) },
+                    onRetryMealAnalysisClick = {
+                        pendingMealReview?.draft?.let(startMealAnalysis)
+                    },
+                    onDismissMealAnalysisClick = {
+                        pendingMealReview = null
+                        mealSaveInProgress = false
+                    }
+                )
+            }
 
         composable(Route.AddMeal.path) {
             AddMealScreen(
@@ -526,6 +563,9 @@ fun AIDietNavHost() {
                         }
                     }
                 },
+                onMealLogReminderSettingsClick = {
+                    navController.navigate(Route.MealLogReminderSettings.path)
+                },
                 onPasswordResetClick = {
                     coroutineScope.launch {
                         authRepository
@@ -609,6 +649,33 @@ fun AIDietNavHost() {
             )
         }
 
+        composable(Route.MealLogReminderSettings.path) {
+            MealLogReminderSettingsScreen(
+                breakfastEnabled = mealLogReminderSettings.breakfastEnabled,
+                onBreakfastEnabledChange = { enabled ->
+                    mealLogReminderSettings = mealLogReminderSettings.copy(
+                        breakfastEnabled = enabled
+                    )
+                    mealLogReminderSettingsStore.save(currentUserId, mealLogReminderSettings)
+                },
+                lunchEnabled = mealLogReminderSettings.lunchEnabled,
+                onLunchEnabledChange = { enabled ->
+                    mealLogReminderSettings = mealLogReminderSettings.copy(
+                        lunchEnabled = enabled
+                    )
+                    mealLogReminderSettingsStore.save(currentUserId, mealLogReminderSettings)
+                },
+                dinnerEnabled = mealLogReminderSettings.dinnerEnabled,
+                onDinnerEnabledChange = { enabled ->
+                    mealLogReminderSettings = mealLogReminderSettings.copy(
+                        dinnerEnabled = enabled
+                    )
+                    mealLogReminderSettingsStore.save(currentUserId, mealLogReminderSettings)
+                },
+                onBackClick = { navController.navigateUp() }
+            )
+        }
+
         composable(Route.GoalSettings.path) {
             GoalSettingsScreen(
                 goalStartDate = goalStartDate,
@@ -683,9 +750,43 @@ fun AIDietNavHost() {
                     ?: proteinGoal.toPositiveIntOrDefault(100),
                 targetFatGram = activeGoalPlan?.dailyFatGram
                     ?: targetFatGram.toPositiveIntOrDefault(60),
+                onUpdateBodyMeasurement = { measurement, bodyMeasurementDraft ->
+                    if (currentUserId > 0) {
+                        coroutineScope.launch {
+                            goalRepository.updateBodyMeasurement(
+                                ownerId = currentUserId,
+                                measurement = measurement,
+                                draft = bodyMeasurementDraft
+                            )
+                        }
+                    }
+                },
+                onDeleteBodyMeasurement = { measurement ->
+                    if (currentUserId > 0) {
+                        coroutineScope.launch {
+                            goalRepository.deleteBodyMeasurement(
+                                ownerId = currentUserId,
+                                measurementId = measurement.id
+                            )
+                        }
+                    }
+                },
                 onBackClick = { navController.navigateUp() }
             )
         }
+        }
+
+        if (authTransitionInProgress) {
+            CoachieStartingScreen()
+        }
+    }
+}
+
+private suspend fun delayRemainingStartingScreenTime(startedAtMillis: Long) {
+    val elapsedMillis = System.currentTimeMillis() - startedAtMillis
+    val remainingMillis = StartingScreenMinDurationMillis - elapsedMillis
+    if (remainingMillis > 0L) {
+        delay(remainingMillis)
     }
 }
 

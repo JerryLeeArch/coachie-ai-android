@@ -48,7 +48,7 @@ fun MealListScreen(
     var selectedFilter by remember { mutableStateOf(MealRecordFilter.Today) }
     val displayedMeals = remember(selectedFilter, mealRecords) {
         when (selectedFilter) {
-            MealRecordFilter.Today -> mealRecords.filter { isTodayMeal(it.createdAt) }
+            MealRecordFilter.Today -> mealRecords.filter { isTodayMeal(it) }
             MealRecordFilter.All -> mealRecords
         }
     }
@@ -190,7 +190,7 @@ private fun MealListItem(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = formatMealDateTime(mealRecord.createdAt),
+                    text = formatMealDateTime(mealRecord),
                     style = MaterialTheme.typography.labelMedium,
                     color = AppTextMuted
                 )

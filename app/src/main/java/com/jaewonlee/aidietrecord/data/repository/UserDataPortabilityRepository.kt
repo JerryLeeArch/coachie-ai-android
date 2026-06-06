@@ -8,6 +8,8 @@ import com.jaewonlee.aidietrecord.data.model.MealEntity
 import com.jaewonlee.aidietrecord.data.model.MealFoodEntity
 import com.jaewonlee.aidietrecord.data.model.MealWithFoods
 import com.jaewonlee.aidietrecord.data.model.UserAccount
+import com.jaewonlee.aidietrecord.data.model.currentTimeZoneId
+import com.jaewonlee.aidietrecord.data.model.localDateEpochDay
 import java.io.InputStream
 import java.io.OutputStream
 import org.json.JSONArray
@@ -59,7 +61,7 @@ class UserDataPortabilityRepository(
     ): ExportSummary {
         val root = JSONObject(inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() })
         require(root.optString("format") == ExportFormat) {
-            "This file is not an AI Meal Log export."
+            "This file is not a Coachie AI export."
         }
         require(root.optInt("schemaVersion") == SchemaVersion) {
             "This export version is not supported."
@@ -124,6 +126,8 @@ private fun MealWithFoods.toJson(): JSONObject {
         .putNullable("imageUri", meal.imageUri)
         .putNullable("aiSummary", meal.aiSummary)
         .put("createdAt", meal.createdAt)
+        .put("timeZoneId", meal.timeZoneId)
+        .put("localDateEpochDay", meal.localDateEpochDay)
         .put("foods", JSONArray(foods.map { it.toJson() }))
 }
 
@@ -178,12 +182,20 @@ private fun BodyMeasurementEntity.toJson(): JSONObject {
 }
 
 private fun JSONObject.toMealEntity(ownerId: Long): MealEntity {
+    val createdAt = getLong("createdAt")
+    val timeZoneId = optString("timeZoneId").ifBlank { currentTimeZoneId() }
     return MealEntity(
         ownerId = ownerId,
         memo = getString("memo"),
         imageUri = optNullableString("imageUri"),
         aiSummary = optNullableString("aiSummary"),
-        createdAt = getLong("createdAt")
+        createdAt = createdAt,
+        timeZoneId = timeZoneId,
+        localDateEpochDay = if (has("localDateEpochDay")) {
+            getLong("localDateEpochDay")
+        } else {
+            localDateEpochDay(createdAt, timeZoneId)
+        }
     )
 }
 
