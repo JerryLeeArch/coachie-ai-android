@@ -6,7 +6,9 @@ Coachie AI는 내가 목표하는 몸을 위해 AI의 도움을 받아 목표를
 
 ## Preview
 
-![Coachie AI preview](docs/260607_screenshots/coachie-ai-preview.gif)
+![Coachie AI home flow](docs/260607_screenshots/2.%20home.gif)
+
+![Coachie AI dark mode](docs/260607_screenshots/2.%20dark%20mode.gif)
 
 ## 주요 기능
 
@@ -26,6 +28,8 @@ Coachie AI는 내가 목표하는 몸을 위해 AI의 도움을 받아 목표를
 ### 3. 목표 기반 홈 대시보드
 
 오늘 섭취 칼로리, 탄수화물, 단백질, 지방, 식이섬유, 당, 나트륨을 목표와 비교해 보여줍니다. 목표 초과 여부도 `Over goal by N kcal`처럼 명확하게 표시합니다.
+
+![Home flow](docs/260607_screenshots/2.%20home.gif)
 
 ### 4. AI 목표 설정 및 신체 기록
 
