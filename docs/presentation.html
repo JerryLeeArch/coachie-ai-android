@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coachie AI Presentation</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #e8ece6;
+      color: #20251f;
+      font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", Arial, sans-serif;
+    }
+    .slide {
+      width: 1280px;
+      min-height: 720px;
+      margin: 24px auto;
+      padding: 64px 76px;
+      background: #fcfcf9;
+      border: 1px solid #d9dfd4;
+      page-break-after: always;
+      position: relative;
+    }
+    .slide:last-child {
+      page-break-after: auto;
+    }
+    h1 {
+      margin: 0 0 18px;
+      font-size: 64px;
+      line-height: 1.15;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 0 0 28px;
+      font-size: 46px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    h3 {
+      margin: 0 0 12px;
+      font-size: 26px;
+    }
+    p, li {
+      font-size: 28px;
+      line-height: 1.55;
+    }
+    ul {
+      margin: 0;
+      padding-left: 34px;
+    }
+    li {
+      margin: 12px 0;
+    }
+    .muted {
+      color: #70786d;
+    }
+    .name {
+      margin-top: 44px;
+      font-size: 28px;
+      color: #3e6f58;
+      font-weight: 700;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 34px;
+      align-items: center;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+    .card {
+      min-height: 210px;
+      padding: 26px;
+      background: #eef7f1;
+      border: 1px solid #cfe3d7;
+      border-radius: 18px;
+    }
+    .card p {
+      margin: 0;
+      font-size: 23px;
+    }
+    .phone {
+      display: block;
+      max-height: 540px;
+      max-width: 100%;
+      margin: 0 auto;
+      border: 1px solid #cbd5c8;
+      border-radius: 18px;
+      background: white;
+    }
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-top: 32px;
+    }
+    .step {
+      padding: 22px;
+      min-height: 170px;
+      background: #f4f6f1;
+      border: 1px solid #dce3d7;
+      border-radius: 16px;
+      font-size: 25px;
+      line-height: 1.4;
+      font-weight: 700;
+    }
+    .badge {
+      display: inline-block;
+      margin: 6px 8px 6px 0;
+      padding: 10px 18px;
+      border-radius: 999px;
+      background: #4dba8c;
+      color: white;
+      font-size: 23px;
+      font-weight: 700;
+    }
+    .footer {
+      position: absolute;
+      left: 76px;
+      right: 76px;
+      bottom: 34px;
+      display: flex;
+      justify-content: space-between;
+      color: #8a9185;
+      font-size: 18px;
+    }
+    @media print {
+      @page {
+        size: 16in 9in;
+        margin: 0;
+      }
+      body {
+        background: #fff;
+      }
+      .slide {
+        margin: 0;
+        border: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="slide">
+    <h1>Coachie AI</h1>
+    <p class="muted">AI 기반 목표 설정과 식단 기록 앱</p>
+    <p class="name">202011344 이재원</p>
+    <div class="footer"><span>Mobile Programming Final Project</span><span>1</span></div>
+  </section>
+
+  <section class="slide">
+    <h2>앱 소개</h2>
+    <div class="grid">
+      <div>
+        <ul>
+          <li>목표하는 몸을 위해 AI와 함께 식단 목표를 세우는 앱</li>
+          <li>먹은 음식을 기록하고 목표 대비 섭취량을 확인</li>
+          <li>다이어트와 벌크업 기록 부담을 줄이는 것이 핵심</li>
+        </ul>
+      </div>
+      <img class="phone" src="260607_screenshots/1.%20login.png" alt="Login screen">
+    </div>
+    <div class="footer"><span>Coachie AI</span><span>2</span></div>
+  </section>
+
+  <section class="slide">
+    <h2>핵심 기능</h2>
+    <div class="cards">
+      <div class="card">
+        <h3>AI 식단 분석</h3>
+        <p>음식 사진과 설명을 기반으로 칼로리와 영양소를 추정합니다.</p>
+      </div>
+      <div class="card">
+        <h3>목표 관리</h3>
+        <p>체중, 골격근량, 체지방률을 바탕으로 일일 영양 목표를 관리합니다.</p>
+      </div>
+      <div class="card">
+        <h3>사용자 데이터</h3>
+        <p>Firebase 계정별로 식단, 목표, 신체 기록을 동기화합니다.</p>
+      </div>
+    </div>
+    <div class="flow">
+      <div class="step">1. 로그인</div>
+      <div class="step">2. 음식 기록</div>
+      <div class="step">3. AI 리뷰</div>
+      <div class="step">4. 목표 확인</div>
+    </div>
+    <div class="footer"><span>Coachie AI</span><span>3</span></div>
+  </section>
+
+  <section class="slide">
+    <h2>주요 화면</h2>
+    <div class="grid">
+      <img class="phone" src="260607_screenshots/2.%20home-analysis%20ready.png" alt="Home screen">
+      <div>
+        <ul>
+          <li>오늘 섭취 칼로리와 목표 대비 남은 칼로리 표시</li>
+          <li>탄수화물, 단백질, 지방, 식이섬유, 당, 나트륨 확인</li>
+          <li>AI 분석 결과가 준비되면 홈에서 바로 리뷰 가능</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer"><span>Coachie AI</span><span>4</span></div>
+  </section>
+
+  <section class="slide">
+    <h2>목표 설정</h2>
+    <div class="grid">
+      <div>
+        <ul>
+          <li>현재 몸 상태와 목표 몸 상태 입력</li>
+          <li>AI가 목표 기간에 맞는 영양 계획 제안</li>
+          <li>신체 측정값은 날짜별로 저장</li>
+        </ul>
+      </div>
+      <img class="phone" src="260607_screenshots/4.%20goal%20settings.png" alt="Goal settings screen">
+    </div>
+    <div class="footer"><span>Coachie AI</span><span>5</span></div>
+  </section>
+
+  <section class="slide">
+    <h2>기술 스택</h2>
+    <p>
+      <span class="badge">Kotlin</span>
+      <span class="badge">Jetpack Compose</span>
+      <span class="badge">Room</span>
+      <span class="badge">Firebase Auth</span>
+      <span class="badge">Firestore</span>
+      <span class="badge">Firebase AI</span>
+    </p>
+    <ul>
+      <li>Room DB로 로컬 식단, 목표, 신체 측정값 저장</li>
+      <li>Firebase Auth로 사용자 계정 관리</li>
+      <li>Firestore로 계정별 데이터 스냅샷 저장 및 복원</li>
+      <li>Firebase AI Gemini로 음식 영양 정보 추정</li>
+    </ul>
+    <div class="footer"><span>Coachie AI</span><span>6</span></div>
+  </section>
+
+  <section class="slide">
+    <h2>개발 중 해결한 문제</h2>
+    <ul>
+      <li>에뮬레이터 Firebase 로그인 실패: DNS 서버 옵션으로 해결</li>
+      <li>로그인 후 데이터가 비어 보이는 문제: Firestore 다운로드 동기화 추가</li>
+      <li>AI 분석값 신뢰도 문제: 리뷰 화면과 수정 기능으로 보완</li>
+      <li>목표 변경 이력 문제: 기간 기반 GoalPlan 데이터 구조로 개선</li>
+    </ul>
+    <div class="footer"><span>Coachie AI</span><span>7</span></div>
+  </section>
+
+  <section class="slide">
+    <h2>향후 발전 방향</h2>
+    <ul>
+      <li>Add Meal 화면을 카메라 중심 UI로 개선</li>
+      <li>카메라 화면에서 음식이 실시간 highlight되도록 구현</li>
+      <li>highlight된 음식을 터치하면 바로 AI 분석 시작</li>
+      <li>Firebase Storage 이미지 업로드와 더 정교한 양방향 동기화 추가</li>
+    </ul>
+    <div class="footer"><span>감사합니다</span><span>8</span></div>
+  </section>
+</body>
+</html>
