@@ -6,9 +6,10 @@
 
 ## Preview
 
-![Coachie AI home flow](docs/260607_screenshots/2.%20home.gif)
-
-![Coachie AI dark mode](docs/260607_screenshots/2.%20dark%20mode.gif)
+<p>
+  <img src="docs/260607_screenshots/2.%20home.gif" alt="Coachie AI home flow" width="320" />
+  <img src="docs/260607_screenshots/2.%20dark%20mode.gif" alt="Coachie AI dark mode" width="320" />
+</p>
 
 ## 주요 기능
 
@@ -16,41 +17,45 @@
 
 이메일과 비밀번호로 회원가입/로그인할 수 있고, Firebase Auth의 비밀번호 재설정 메일 발송을 지원합니다. 사용자별 Room 데이터는 Firebase UID와 연결되어 계정별로 분리됩니다.
 
-![Login](docs/260607_screenshots/1.%20login.png)
+<img src="docs/260607_screenshots/1.%20login.png" alt="Login" width="280" />
 
 ### 2. AI 식단 분석 및 식사 기록
 
 사용자는 자신이 먹은 음식의 사진이나 설명을 Add Meal 화면에서 할수 있습니다. Analyze Meal 버튼을 누르면 Firebase의 Gemini가 자동으로 포맷에 맞추어 분석 결과를 제시하고, 유저는 직접 바꾸고 싶은 디테일이 있으면 바꿀수 있고 바로 저장을 원하면 저장 할 수 있습니다. 그리고 AI 분석이 실패해도 로컬 영양 추정 로직으로 기록 흐름이 이어집니다.
 
-![AI meal review](docs/260607_screenshots/2.%20home-%20review%20meal.png)
-![Analysis ready](docs/260607_screenshots/2.%20home-analysis%20ready.png)
+<p>
+  <img src="docs/260607_screenshots/2.%20home-%20review%20meal.png" alt="AI meal review" width="280" />
+  <img src="docs/260607_screenshots/2.%20home-analysis%20ready.png" alt="Analysis ready" width="280" />
+</p>
 
 ### 3. 목표 기반 홈 대시보드
 
 오늘 섭취 칼로리, 탄수화물, 단백질, 지방, 식이섬유, 당, 나트륨을 목표와 비교해 보여줍니다. 목표 초과 여부도 `Over goal by N kcal`처럼 명확하게 표시합니다.
 그리고 좌우 스와이프를 통해 내가 언제 음식을 어떻게 먹었나 확인 할 수 있습니다.
 
-![Home flow](docs/260607_screenshots/2.%20home.gif)
+<img src="docs/260607_screenshots/2.%20home.gif" alt="Home flow" width="320" />
 
 ### 4. AI 목표 설정 및 신체 기록
 
 현재 체중, 골격근량, 체지방률, 기초대사량 등을 입력하면 목표 기간에 맞는 일일 영양 목표를 제안합니다. 목록중 자신이 입력하고 싶은 것을 하나만 입력해도 되고, 이는 각각 날짜별로 저장됩니다.
 그리고 목표 변경 이력은 기간 기반으로 관리되어서 Insight를 보기 편하게 했습니다.
 
-![Goal settings](docs/260607_screenshots/4.%20goal%20settings.png)
-![Goal proposal](docs/260607_screenshots/4.%20goal%20settings%202.png)
+<p>
+  <img src="docs/260607_screenshots/4.%20goal%20settings.png" alt="Goal settings" width="280" />
+  <img src="docs/260607_screenshots/4.%20goal%20settings%202.png" alt="Goal proposal" width="280" />
+</p>
 
 ### 5. 최근 통계와 리마인더
 
 최근 식단 기록을 날짜별로 묶어 평균 섭취량과 추세를 확인할 수 있습니다. 아침/점심/저녁 식사 기록 알림도 설정할 수 있습니다.
 
-![Meal reminder](docs/260607_screenshots/3.%20meal%20log%20reminder.png)
+<img src="docs/260607_screenshots/3.%20meal%20log%20reminder.png" alt="Meal reminder" width="280" />
 
 ### 6. 사용자 데이터 export/import 및 Firebase 동기화
 
 프로필 화면에서 현재 계정의 식사 기록, 목표 계획, 신체 측정 기록을 JSON으로 내보내고 다시 가져올 수 있습니다. 로컬 데이터 변경 후에는 `users/{firebaseUid}/data/current`에 사용자별 스냅샷을 업로드하고, 로그인 시 Firebase 데이터를 Room DB로 복원합니다.
 
-![Profile](docs/260607_screenshots/3.%20profile%20screen.png)
+<img src="docs/260607_screenshots/3.%20profile%20screen.png" alt="Profile" width="280" />
 
 ## 기술 스택
 
@@ -82,14 +87,13 @@ flowchart LR
 
 ## 자료 및 영상 링크
 
-| 항목                     | 링크                                                                                             |
-| ------------------------ | ------------------------------------------------------------------------------------------------ | --- |
-| 2분 요약 영상            | https://youtu.be/l0quwBIKkvY                                                                     |
-| 10분 상세 발표 영상      | https://youtu.be/eIa13d7TxRc                                                                     |
-| 프로젝트 최종 보고서 PDF | https://drive.google.com/file/d/1F8BVKzX5v88LDvUaN7VHa-iBTcJHW5pJ/view?usp=drive_link            |     |
-| APK 다운로드             | https://drive.google.com/file/d/1QqEsnoZq-HY4XFBw9oGgfXuwYPVVMT2T/view?usp=sharing               |
-| 설치용 QR 코드           | quickchart.io/qr?text=drive.google.com/file/d/1QqEsnoZq-HY4XFBw9oGgfXuwYPVVMT2T/view?usp=sharing |
-|                          |
+| 항목                     | 링크                                                                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 2분 요약 영상            | [YouTube](https://youtu.be/l0quwBIKkvY)                                                                                               |
+| 10분 상세 발표 영상      | [YouTube](https://youtu.be/eIa13d7TxRc)                                                                                               |
+| 프로젝트 최종 보고서 PDF | [Google Drive](https://drive.google.com/file/d/1F8BVKzX5v88LDvUaN7VHa-iBTcJHW5pJ/view?usp=drive_link)                                 |
+| APK 다운로드             | [Google Drive](https://drive.google.com/file/d/1QqEsnoZq-HY4XFBw9oGgfXuwYPVVMT2T/view?usp=sharing)                                    |
+| 설치용 QR 코드           | [QR 코드](https://quickchart.io/qr?text=https%3A%2F%2Fdrive.google.com%2Ffile%2Fd%2F1QqEsnoZq-HY4XFBw9oGgfXuwYPVVMT2T%2Fview%3Fusp%3Dsharing) |
 
 ## 프로젝트 요구사항 체크리스트
 
