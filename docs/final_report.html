@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Coachie AI 최종 보고서</title>
+  <style>
+    :root {
+      --bg: #f5f6f2;
+      --surface: #fcfcf9;
+      --text: #20251f;
+      --muted: #70786d;
+      --primary: #4dba8c;
+      --line: #dde2d7;
+      --soft: #e1f3ea;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+    }
+    main {
+      width: min(980px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 48px 0 80px;
+    }
+    h1, h2, h3 {
+      line-height: 1.25;
+    }
+    h1 {
+      font-size: 42px;
+      margin: 0 0 8px;
+    }
+    h2 {
+      margin-top: 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      font-size: 28px;
+    }
+    h3 {
+      margin-top: 28px;
+      font-size: 20px;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 18px;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 22px;
+      margin: 18px 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .screens {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+    .screens img {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: white;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      background: var(--surface);
+    }
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: var(--soft);
+    }
+    code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.92em;
+    }
+    pre {
+      overflow-x: auto;
+      background: #1f2722;
+      color: #eef7f0;
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 13px;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--soft);
+      color: #246b4c;
+      border-radius: 999px;
+      padding: 4px 10px;
+      margin: 2px 4px 2px 0;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    a { color: #247752; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Coachie AI 최종 보고서</h1>
+  <p class="subtitle">AI 기반 목표 설정과 식단 기록을 결합한 Android 모바일 앱</p>
+
+  <section>
+    <h2>1. 프로젝트 개요 및 기획 의도</h2>
+    <div class="card">
+      <p><strong>앱 이름:</strong> Coachie AI</p>
+      <p><strong>요약:</strong> 내가 목표하는 몸을 위해, AI의 도움을 받아 목표를 세우고, 먹는 음식들을 기록하는 앱이다.</p>
+      <p><strong>기획 의도:</strong> 다이어트나 벌크업은 꾸준한 기록과 피드백이 중요하지만, 매 끼니마다 음식명과 영양 정보를 직접 입력하는 일은 번거롭다. Coachie AI는 음식 사진과 간단한 설명을 바탕으로 AI 분석을 제공하고, 목표 섭취량과 실제 섭취량을 비교해 사용자가 자신의 식습관을 쉽게 파악하도록 돕는다.</p>
+      <p>핵심 가치는 <strong>기록 부담 감소</strong>, <strong>목표 기반 피드백</strong>, <strong>사용자별 데이터 관리</strong>이다. 단순 칼로리 기록 앱에서 출발했지만, 개발 과정에서 Firebase Auth, Firestore 동기화, 목표 이력 관리, 신체 측정 기록까지 확장하였다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>2. 시스템 아키텍처 및 기술 스택 선정 이유</h2>
+    <div class="grid">
+      <div class="card">
+        <h3>클라이언트 UI</h3>
+        <p><span class="badge">Kotlin</span><span class="badge">Jetpack Compose</span><span class="badge">Material3</span></p>
+        <p>선언형 UI로 화면 상태와 UI를 연결하기 쉽고, 홈 대시보드/목표 설정/리스트 화면처럼 상태 변화가 많은 화면을 빠르게 구성할 수 있어 Compose를 선택했다.</p>
+      </div>
+      <div class="card">
+        <h3>로컬 데이터</h3>
+        <p><span class="badge">Room</span><span class="badge">Flow</span></p>
+        <p>식단 기록, 목표 계획, 신체 측정값은 오프라인에서도 조회되어야 하므로 Room DB에 저장한다. Flow를 통해 DB 변경이 화면에 자동 반영되도록 구성했다.</p>
+      </div>
+      <div class="card">
+        <h3>Firebase</h3>
+        <p><span class="badge">Authentication</span><span class="badge">Firestore</span><span class="badge">Firebase AI</span></p>
+        <p>이메일 기반 회원 관리, 사용자별 클라우드 스냅샷 저장, Gemini 기반 식단 분석을 위해 Firebase 제품군을 사용했다.</p>
+      </div>
+    </div>
+
+    <pre><code>flowchart LR
+User -> Compose UI -> AIDietNavHost -> Repository
+Repository -> Room Database
+Repository -> Firebase Auth / Firestore / AI
+Room Database -> Compose UI</code></pre>
+  </section>
+
+  <section>
+    <h2>3. 핵심 기능 구현 세부 사항</h2>
+
+    <h3>핵심 기능 1: AI 식단 분석 및 리뷰 후 저장</h3>
+    <p>사용자는 음식명, 설명, 사진을 입력하고 AI 분석 결과를 확인한 뒤 저장한다. AI 분석 결과는 그대로 DB에 들어가지 않고, 리뷰 화면을 거쳐 사용자가 확인할 수 있도록 설계했다.</p>
+    <pre><code>val reviewedMeal = mealReviewRepository.reviewMealDraft(draft)
+pendingMealReview = pendingMealReview?.copy(
+    isAnalyzing = false,
+    reviewedMeal = reviewedMeal,
+    errorMessage = null
+)</code></pre>
+    <p>AI 분석 실패 시에도 앱 흐름이 끊기지 않도록 로컬 영양 추정 fallback을 두었다. 이 구조 덕분에 발표 환경에서 네트워크가 불안정해도 식단 기록 기능을 설명할 수 있다.</p>
+
+    <h3>핵심 기능 2: 목표 계획과 신체 측정값 DB 관리</h3>
+    <p>목표는 단순 설정값이 아니라 기간을 가진 이력 데이터로 저장된다. 사용자가 새 목표를 저장하면 기존 목표 기간을 닫고 새 goal row를 추가하여, 과거 식단 기록을 당시 목표와 비교할 수 있는 기반을 만들었다.</p>
+    <pre><code>mealDatabase.withTransaction {
+    goalDao.closeOverlappingGoalPlans(ownerId, draft.validFromEpochDay)
+    goalDao.deleteGoalPlansStartingAtOrAfter(ownerId, draft.validFromEpochDay)
+    goalDao.insertGoalPlan(goalPlan)
+    goalDao.insertBodyMeasurement(startMeasurement)
+}</code></pre>
+
+    <h3>핵심 기능 3: 사용자별 Firebase 동기화</h3>
+    <p>Firebase Auth의 UID와 로컬 UserAccount를 연결하고, 사용자의 식단/목표/신체 기록을 Firestore의 <code>users/{firebaseUid}/data/current</code> 문서에 스냅샷으로 저장한다. 로그인 시에는 Firestore 스냅샷을 Room DB로 내려받아 다른 실행 환경에서도 같은 데이터를 볼 수 있게 했다.</p>
+    <pre><code>val snapshot = firestore.collection("users")
+    .document(firebaseUid)
+    .collection("data")
+    .document("current")
+    .get()
+    .await()
+
+mealDatabase.withTransaction {
+    mealDao.deleteMealsForOwner(userAccount.id)
+    goalDao.deleteGoalPlansForOwner(userAccount.id)
+    goalDao.deleteBodyMeasurementsForOwner(userAccount.id)
+    // Firestore snapshot rows are inserted into Room.
+}</code></pre>
+
+    <h3>UI/UX 디자인 콘셉트</h3>
+    <p>Coachie AI는 웰니스/피트니스 앱처럼 차분한 배경색, 초록 key color, 카드형 정보 구조를 사용했다. 홈 화면은 큰 칼로리 게이지와 매크로 요약을 중심으로 구성하고, 목표 설정 화면은 현재 목표 요약을 먼저 보여준 뒤 필요할 때 편집하는 흐름으로 다듬었다.</p>
+    <div class="screens">
+      <img src="260607_screenshots/1.%20login.png" alt="로그인 화면">
+      <img src="260607_screenshots/2.%20home-analysis%20ready.png" alt="홈 화면">
+      <img src="260607_screenshots/3.%20profile%20screen.png" alt="프로필 화면">
+      <img src="260607_screenshots/4.%20goal%20settings.png" alt="목표 설정 화면">
+    </div>
+  </section>
+
+  <section>
+    <h2>4. 트러블 슈팅 및 문제 해결</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>문제</th>
+          <th>원인</th>
+          <th>해결</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>에뮬레이터에서 Firebase 로그인이 실패</td>
+          <td>에뮬레이터 DNS/네트워크가 불안정하여 Firebase Auth 호스트에 접근하지 못함</td>
+          <td><code>-dns-server 8.8.8.8,1.1.1.1 -no-snapshot-load</code> 옵션으로 에뮬레이터를 실행하여 해결</td>
+        </tr>
+        <tr>
+          <td>Sandy 계정 로그인 후 데이터가 비어 보임</td>
+          <td>Firestore에는 데이터가 있었지만 앱이 로그인 시 클라우드 데이터를 Room으로 내려받지 않았음</td>
+          <td>Firestore snapshot download 기능을 추가하고 로그인/세션 복원 시 Room DB로 import하도록 수정</td>
+        </tr>
+        <tr>
+          <td>AI 분석 결과를 그대로 믿기 어려움</td>
+          <td>음식 사진 기반 영양 분석은 추정값이며 실제 음식량과 다를 수 있음</td>
+          <td>리뷰 화면과 edit 화면에서 사용자가 영양소 값을 확인/수정할 수 있게 설계</td>
+        </tr>
+        <tr>
+          <td>목표 설정값이 앱 재실행 후 유지되지 않거나 과거 목표 추적이 어려움</td>
+          <td>초기 구현은 목표값을 화면 상태로만 관리</td>
+          <td>GoalPlanEntity와 BodyMeasurementEntity를 추가하고 목표를 기간 기반 Room 데이터로 저장</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>5. 프로젝트 후기 및 향후 발전 방향</h2>
+    <div class="card">
+      <p>이번 프로젝트를 통해 Jetpack Compose 화면 설계, Room 기반 데이터 모델링, Firebase Auth/Firestore 연동, AI 분석 흐름을 하나의 앱 안에서 연결하는 경험을 했다. 특히 처음에는 단순 식단 기록 앱으로 시작했지만, 사용자가 실제로 목표를 세우고 데이터를 누적해 볼 수 있으려면 인증, 목표 이력, 신체 기록, 클라우드 동기화가 필요하다는 점을 개발 과정에서 배웠다.</p>
+      <p>향후에는 Firestore 스냅샷 방식이 아니라 개별 meal/goal 문서 단위의 양방향 동기화, Firebase Storage를 이용한 이미지 업로드, 더 정교한 영양 분석 모델, 알림 클릭 시 바로 식사 기록 화면으로 이동하는 UX, 실제 배포용 release signing을 추가하고 싶다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>6. 프로젝트 요구사항 만족여부 체크리스트</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>요구사항</th>
+          <th>만족 여부</th>
+          <th>구현 내용</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>4개 이상의 화면 전환</td>
+          <td>충족</td>
+          <td>Login, Home, Add Meal, Meal Review, Meal List, Meal Detail, Goal Settings, Recent Stats, Profile</td>
+        </tr>
+        <tr>
+          <td>1개 이상의 리스트 페이지</td>
+          <td>충족</td>
+          <td>식단 기록 리스트, 최근 통계</td>
+        </tr>
+        <tr>
+          <td>이미지 포함</td>
+          <td>충족</td>
+          <td>음식 사진 선택, URI 저장, 미리보기 표시</td>
+        </tr>
+        <tr>
+          <td>데이터베이스</td>
+          <td>충족</td>
+          <td>Room DB로 사용자, 식단, 음식 항목, 목표, 신체 측정값 저장</td>
+        </tr>
+        <tr>
+          <td>선택 기능</td>
+          <td>충족</td>
+          <td>Firebase AI 분석, Firebase Auth, Firestore 동기화, 알림</td>
+        </tr>
+        <tr>
+          <td>README 및 산출물</td>
+          <td>충족</td>
+          <td>README, 스크린샷, GIF, HTML 보고서, APK 빌드 산출물</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+</body>
+</html>

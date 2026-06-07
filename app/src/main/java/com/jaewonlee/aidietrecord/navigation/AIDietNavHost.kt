@@ -28,6 +28,7 @@ import com.jaewonlee.aidietrecord.data.model.MealRecord
 import com.jaewonlee.aidietrecord.data.model.MealUploadDraft
 import com.jaewonlee.aidietrecord.data.model.UserAccount
 import com.jaewonlee.aidietrecord.data.repository.AuthRepository
+import com.jaewonlee.aidietrecord.data.repository.FirebaseUserDataRepository
 import com.jaewonlee.aidietrecord.data.repository.GoalRepository
 import com.jaewonlee.aidietrecord.data.repository.MealReviewRepository
 import com.jaewonlee.aidietrecord.data.repository.MealRepository
@@ -84,6 +85,9 @@ fun AIDietNavHost(
     }
     val dataPortabilityRepository = remember(mealDatabase) {
         UserDataPortabilityRepository(mealDatabase)
+    }
+    val firebaseUserDataRepository = remember(mealDatabase) {
+        FirebaseUserDataRepository(mealDatabase)
     }
 
     var currentUserId by rememberSaveable {
@@ -182,6 +186,12 @@ fun AIDietNavHost(
         currentUserCreatedAt = userAccount?.createdAt ?: 0L
     }
 
+    suspend fun restoreFirebaseUserData(userAccount: UserAccount) {
+        runCatching {
+            firebaseUserDataRepository.downloadUserDataSnapshot(userAccount)
+        }
+    }
+
     LaunchedEffect(Unit) {
         val startedAt = System.currentTimeMillis()
         val signedInUser = authRepository.getSignedInUser()
@@ -199,6 +209,7 @@ fun AIDietNavHost(
             password = ""
             authErrorMessage = null
             authInfoMessage = null
+            restoreFirebaseUserData(signedInUser)
         }
         delayRemainingStartingScreenTime(startedAt)
         authRestoreCompleted = true
@@ -289,6 +300,15 @@ fun AIDietNavHost(
         MealLogReminderScheduler.scheduleAll(context.applicationContext, currentUserId, settings)
     }
 
+    fun queueFirebaseDataUpload(userAccount: UserAccount? = currentUser) {
+        val syncUser = userAccount?.takeIf { it.firebaseUid != null } ?: return
+        coroutineScope.launch {
+            runCatching {
+                firebaseUserDataRepository.uploadUserDataSnapshot(syncUser)
+            }
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
@@ -316,6 +336,7 @@ fun AIDietNavHost(
                                         mealSaveInProgress = false
                                         authErrorMessage = null
                                         authInfoMessage = null
+                                        restoreFirebaseUserData(userAccount)
                                         navController.navigate(Route.Home.path) {
                                             popUpTo(Route.Login.path) { inclusive = true }
                                         }
@@ -447,6 +468,7 @@ fun AIDietNavHost(
                     coroutineScope.launch {
                         if (currentUserId > 0L && reviewedMeal.ownerId == currentUserId) {
                             mealRepository.addMealRecord(reviewedMeal)
+                            queueFirebaseDataUpload()
                         }
                         pendingMealReview = null
                         mealSaveInProgress = false
@@ -485,6 +507,7 @@ fun AIDietNavHost(
                 onDeleteClick = { mealRecord ->
                     coroutineScope.launch {
                         mealRepository.deleteMealRecord(mealRecord)
+                        queueFirebaseDataUpload()
                         val returnedToList = navController.popBackStack(
                             route = Route.MealList.path,
                             inclusive = false
@@ -519,6 +542,7 @@ fun AIDietNavHost(
                                     mealUploadDraft.copy(ownerId = currentUserId)
                                 )
                                 mealRepository.updateMealRecord(reviewedMeal)
+                                queueFirebaseDataUpload()
                                 navController.navigateUp()
                             } finally {
                                 mealSaveInProgress = false
@@ -574,6 +598,7 @@ fun AIDietNavHost(
                                     nickname = updatedUser.nickname
                                     userId = updatedUser.userId
                                     password = ""
+                                    queueFirebaseDataUpload(updatedUser)
                                     profileErrorMessage = null
                                     profileInfoMessage = "Profile saved."
                                 }
@@ -641,6 +666,7 @@ fun AIDietNavHost(
                                     dataPortabilityRepository.importUserData(userAccount.id, input)
                                 }
                             }.onSuccess { summary ->
+                                queueFirebaseDataUpload(userAccount)
                                 profileErrorMessage = null
                                 profileInfoMessage = summary.toStatusText("Imported")
                             }.onFailure { throwable ->
@@ -749,6 +775,7 @@ fun AIDietNavHost(
                     if (currentUserId > 0) {
                         coroutineScope.launch {
                             goalRepository.saveBodyMeasurement(currentUserId, bodyMeasurementDraft)
+                            queueFirebaseDataUpload()
                         }
                     }
                 },
@@ -756,6 +783,7 @@ fun AIDietNavHost(
                     if (currentUserId > 0) {
                         coroutineScope.launch {
                             goalRepository.saveGoalPlan(currentUserId, goalPlanDraft)
+                            queueFirebaseDataUpload()
                             navController.navigateUp()
                         }
                     }
@@ -785,6 +813,7 @@ fun AIDietNavHost(
                                 measurement = measurement,
                                 draft = bodyMeasurementDraft
                             )
+                            queueFirebaseDataUpload()
                         }
                     }
                 },
@@ -795,6 +824,7 @@ fun AIDietNavHost(
                                 ownerId = currentUserId,
                                 measurementId = measurement.id
                             )
+                            queueFirebaseDataUpload()
                         }
                     }
                 },
