@@ -83,11 +83,10 @@ flowchart LR
 ## 자료 및 영상 링크
 
 | 항목                     | 링크                                                                                             |
-| ------------------------ | ------------------------------------------------------------------------------------------------ |
-| 2분 요약 영상            | 추후 추가 예정                                                                                   |
-| 10분 상세 발표 영상      | 추후 추가 예정                                                                                   |
-| 프로젝트 최종 보고서 PDF | 추후 PDF 업로드 후 링크 연결 예정                                                                |
-| HTML 보고서 초안         | [docs/final_report.html](docs/final_report.html)                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------ | --- |
+| 2분 요약 영상            | https://youtu.be/l0quwBIKkvY                                                                     |
+| 10분 상세 발표 영상      | https://youtu.be/eIa13d7TxRc                                                                     |
+| 프로젝트 최종 보고서 PDF | https://drive.google.com/file/d/1F8BVKzX5v88LDvUaN7VHa-iBTcJHW5pJ/view?usp=drive_link            |     |
 | APK 다운로드             | https://drive.google.com/file/d/1QqEsnoZq-HY4XFBw9oGgfXuwYPVVMT2T/view?usp=sharing               |
 | 설치용 QR 코드           | quickchart.io/qr?text=drive.google.com/file/d/1QqEsnoZq-HY4XFBw9oGgfXuwYPVVMT2T/view?usp=sharing |
 |                          |
