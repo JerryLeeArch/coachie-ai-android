@@ -1,8 +1,8 @@
 # Coachie AI
 
-요약: Coachie AI는 내가 목표하는 몸을 위해 AI의 도움을 받아 목표를 세우고, 먹는 음식들을 기록하는 Android 식단 관리 앱입니다.
+Coachie AI is an Android diet management app that helps users set nutrition goals and record meals with AI assistance.
 
-기획 의도: 사람들이 자신이 먹은 음식을 쉽게 기록하고, 목표를 위해 음식을 얼마나 잘 섭취하고 있는지 바로 확인할 수 있으면, 다이어트와 벌크업이 훨씬 쉬워질 수 있다고 생각해 기획했습니다. 사용자는 자신이 먹은 음식의 사진 또는 자유로운 설명을 업로드하면, AI가 자동으로 영양 분석을 해주고, 목표 칼로리와 매크로 섭취량을 비교하며 자신의 식습관을 관리할 수 있습니다.
+The app was designed around the idea that dieting, bulking, and general body composition goals become easier when users can quickly log what they eat and immediately see how well their intake matches their target. Users can upload a meal photo or write a free-form description, and AI automatically analyzes the nutrition profile. The app then compares calories and macros against the user's goals so they can manage their eating habits more clearly.
 
 ## Preview
 
@@ -11,55 +11,57 @@
   <img src="docs/260607_screenshots/2.%20dark%20mode.gif" alt="Coachie AI dark mode" width="320" />
 </p>
 
-## 주요 기능
+## Key Features
 
-### 1. Firebase 계정 기반 로그인
+### 1. Firebase Account Login
 
-이메일과 비밀번호로 회원가입/로그인할 수 있고, Firebase Auth의 비밀번호 재설정 메일 발송을 지원합니다. 사용자별 Room 데이터는 Firebase UID와 연결되어 계정별로 분리됩니다.
+Users can sign up and log in with an email and password, and password reset emails are supported through Firebase Authentication. User-specific Room data is linked to each Firebase UID, keeping local data separated by account.
 
 <img src="docs/260607_screenshots/1.%20login.png" alt="Login" width="280" />
 
-### 2. AI 식단 분석 및 식사 기록
+### 2. AI Meal Analysis and Meal Logging
 
-사용자는 자신이 먹은 음식의 사진이나 설명을 Add Meal 화면에서 할수 있습니다. Analyze Meal 버튼을 누르면 Firebase의 Gemini가 자동으로 포맷에 맞추어 분석 결과를 제시하고, 유저는 직접 바꾸고 싶은 디테일이 있으면 바꿀수 있고 바로 저장을 원하면 저장 할 수 있습니다. 그리고 AI 분석이 실패해도 로컬 영양 추정 로직으로 기록 흐름이 이어집니다.
+Users can add a meal photo or description from the Add Meal screen. When they tap Analyze Meal, Gemini through Firebase generates a structured nutrition analysis. Users can adjust the details before saving, or save the result immediately. If AI analysis fails, the flow continues with a local nutrition estimation fallback.
 
 <p>
   <img src="docs/260607_screenshots/2.%20home-%20review%20meal.png" alt="AI meal review" width="280" />
   <img src="docs/260607_screenshots/2.%20home-analysis%20ready.png" alt="Analysis ready" width="280" />
 </p>
 
-### 3. 목표 기반 홈 대시보드
+### 3. Goal-Based Home Dashboard
 
-오늘 섭취 칼로리, 탄수화물, 단백질, 지방, 식이섬유, 당, 나트륨을 목표와 비교해 보여줍니다. 목표 초과 여부도 `Over goal by N kcal`처럼 명확하게 표시합니다.
-그리고 좌우 스와이프를 통해 내가 언제 음식을 어떻게 먹었나 확인 할 수 있습니다.
+The home dashboard compares today's calories, carbohydrates, protein, fat, fiber, sugar, and sodium against the user's goals. It clearly shows goal status with messages such as `Over goal by N kcal`.
+
+Users can also swipe left and right to review when and how they logged meals across different dates.
 
 <img src="docs/260607_screenshots/2.%20home.gif" alt="Home flow" width="320" />
 
-### 4. AI 목표 설정 및 신체 기록
+### 4. AI Goal Planning and Body Logs
 
-현재 체중, 골격근량, 체지방률, 기초대사량 등을 입력하면 목표 기간에 맞는 일일 영양 목표를 제안합니다. 목록중 자신이 입력하고 싶은 것을 하나만 입력해도 되고, 이는 각각 날짜별로 저장됩니다.
-그리고 목표 변경 이력은 기간 기반으로 관리되어서 Insight를 보기 편하게 했습니다.
+Users can enter body metrics such as current weight, skeletal muscle mass, body fat percentage, and basal metabolic rate to generate daily nutrition targets for a selected goal period. Each metric is optional, so users can save only the values they want to track.
+
+Goal history is managed by date ranges, making it easier to review changes and understand progress over time.
 
 <p>
   <img src="docs/260607_screenshots/4.%20goal%20settings.png" alt="Goal settings" width="280" />
   <img src="docs/260607_screenshots/4.%20goal%20settings%202.png" alt="Goal proposal" width="280" />
 </p>
 
-### 5. 최근 통계와 리마인더
+### 5. Recent Stats and Meal Reminders
 
-최근 식단 기록을 날짜별로 묶어 평균 섭취량과 추세를 확인할 수 있습니다. 아침/점심/저녁 식사 기록 알림도 설정할 수 있습니다.
+Recent meal records are grouped by date so users can review average intake and trends. The app also supports meal logging reminders for breakfast, lunch, and dinner.
 
 <img src="docs/260607_screenshots/3.%20meal%20log%20reminder.png" alt="Meal reminder" width="280" />
 
-### 6. 사용자 데이터 export/import 및 Firebase 동기화
+### 6. Data Export/Import and Firebase Sync
 
-프로필 화면에서 현재 계정의 식사 기록, 목표 계획, 신체 측정 기록을 JSON으로 내보내고 다시 가져올 수 있습니다. 로컬 데이터 변경 후에는 `users/{firebaseUid}/data/current`에 사용자별 스냅샷을 업로드하고, 로그인 시 Firebase 데이터를 Room DB로 복원합니다.
+From the Profile screen, users can export meal records, goal plans, and body measurement logs as JSON, then import them again later. After local data changes, the app uploads a user-specific snapshot to `users/{firebaseUid}/data/current`, and restores Firebase data into the Room database when the user logs in.
 
 <img src="docs/260607_screenshots/3.%20profile%20screen.png" alt="Profile" width="280" />
 
-## 기술 스택
+## Tech Stack
 
-| 구분         | 사용 기술                                                     |
+| Area         | Technologies                                                  |
 | ------------ | ------------------------------------------------------------- |
 | Language     | Kotlin                                                        |
 | UI           | Jetpack Compose, Material3                                    |
@@ -72,7 +74,7 @@
 | Notification | AlarmManager, BroadcastReceiver                               |
 | Build        | Gradle Kotlin DSL, Android Gradle Plugin, KSP                 |
 
-## 시스템 구조
+## Architecture
 
 ```mermaid
 flowchart LR
