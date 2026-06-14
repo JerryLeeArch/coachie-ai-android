@@ -1,4 +1,4 @@
-# 앱 이름: Coachie AI
+# Coachie AI
 
 요약: Coachie AI는 내가 목표하는 몸을 위해 AI의 도움을 받아 목표를 세우고, 먹는 음식들을 기록하는 Android 식단 관리 앱입니다.
 
