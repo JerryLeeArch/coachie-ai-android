@@ -84,24 +84,3 @@ flowchart LR
     Firebase --> Repo
     Room --> UI
 ```
-
-## 자료 및 영상 링크
-
-| 항목                     | 링크                                                                                                                                  |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 2분 요약 영상            | [YouTube](https://youtu.be/l0quwBIKkvY)                                                                                               |
-| 10분 상세 발표 영상      | [YouTube](https://youtu.be/eIa13d7TxRc)                                                                                               |
-| 프로젝트 최종 보고서 PDF | [Google Drive](https://drive.google.com/file/d/1F8BVKzX5v88LDvUaN7VHa-iBTcJHW5pJ/view?usp=drive_link)                                 |
-| APK 다운로드             | [Google Drive](https://drive.google.com/file/d/1QqEsnoZq-HY4XFBw9oGgfXuwYPVVMT2T/view?usp=sharing)                                    |
-| 설치용 QR 코드           | [QR 코드](https://quickchart.io/qr?text=https%3A%2F%2Fdrive.google.com%2Ffile%2Fd%2F1QqEsnoZq-HY4XFBw9oGgfXuwYPVVMT2T%2Fview%3Fusp%3Dsharing) |
-
-## 프로젝트 요구사항 체크리스트
-
-| 요구사항                 | 만족 여부                                                                  |
-| ------------------------ | -------------------------------------------------------------------------- |
-| 4개 이상의 화면 전환     | 홈, 로그인, 식단 추가, AI 리뷰, 식단 리스트, 상세, 목표 설정, 통계, 프로필 |
-| 1개 이상의 리스트 페이지 | 식단 기록 리스트, 최근 통계                                                |
-| 이미지 포함              | 음식 이미지 선택 및 미리보기                                               |
-| 데이터베이스 사용        | Room DB                                                                    |
-| 선택 기능                | Firebase AI 기반 식단 분석, Firebase Auth/Firestore 동기화, 알림           |
-| README 및 결과 자료      | README, 스크린샷, HTML 보고서 초안                                         |
