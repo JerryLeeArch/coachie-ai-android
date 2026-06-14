@@ -18,6 +18,10 @@ local.properties
 .kotlin/
 notes.txt
 app/google-services.json
-docs/
+docs/*.html
+docs/*.md
+docs/*.pdf
+docs/*.txt
+docs/**/*.mov
 *.docx
 *.pdf
