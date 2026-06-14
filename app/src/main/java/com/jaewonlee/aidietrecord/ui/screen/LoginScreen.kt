@@ -19,6 +19,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,7 +39,7 @@ fun LoginScreen(
     var isRegisterMode by rememberSaveable { mutableStateOf(false) }
     var userId by rememberSaveable { mutableStateOf("") }
     var nickname by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var localErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var hideRemoteMessage by rememberSaveable { mutableStateOf(false) }
     val visibleErrorMessage = localErrorMessage ?: errorMessage.takeUnless { hideRemoteMessage }

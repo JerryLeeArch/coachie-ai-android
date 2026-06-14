@@ -96,14 +96,12 @@ fun AIDietNavHost(
     var currentUserFirebaseUid by rememberSaveable { mutableStateOf<String?>(null) }
     var currentUserLoginId by rememberSaveable { mutableStateOf("") }
     var currentUserNickname by rememberSaveable { mutableStateOf("") }
-    var currentUserPasswordHash by rememberSaveable { mutableStateOf("") }
     var currentUserCreatedAt by rememberSaveable { mutableStateOf(0L) }
     val currentUser = currentUserOrNull(
         id = currentUserId,
         firebaseUid = currentUserFirebaseUid,
         userId = currentUserLoginId,
         nickname = currentUserNickname,
-        passwordHash = currentUserPasswordHash,
         createdAt = currentUserCreatedAt
     )
 
@@ -144,7 +142,7 @@ fun AIDietNavHost(
 
     var nickname by rememberSaveable { mutableStateOf("") }
     var userId by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
     var authErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var authInfoMessage by rememberSaveable { mutableStateOf<String?>(null) }
     var profileErrorMessage by rememberSaveable { mutableStateOf<String?>(null) }
@@ -182,7 +180,6 @@ fun AIDietNavHost(
         currentUserFirebaseUid = userAccount?.firebaseUid
         currentUserLoginId = userAccount?.userId.orEmpty()
         currentUserNickname = userAccount?.nickname.orEmpty()
-        currentUserPasswordHash = userAccount?.passwordHash.orEmpty()
         currentUserCreatedAt = userAccount?.createdAt ?: 0L
     }
 
@@ -871,7 +868,6 @@ private fun currentUserOrNull(
     firebaseUid: String?,
     userId: String,
     nickname: String,
-    passwordHash: String,
     createdAt: Long
 ): UserAccount? {
     if (id <= 0) return null
@@ -880,7 +876,6 @@ private fun currentUserOrNull(
         firebaseUid = firebaseUid,
         userId = userId,
         nickname = nickname,
-        passwordHash = passwordHash,
         createdAt = createdAt
     )
 }

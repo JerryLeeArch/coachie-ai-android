@@ -22,7 +22,7 @@ import java.time.ZoneId
         GoalPlanEntity::class,
         BodyMeasurementEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 abstract class MealDatabase : RoomDatabase() {
@@ -47,7 +47,8 @@ abstract class MealDatabase : RoomDatabase() {
                         MIGRATION_6_7,
                         MIGRATION_7_8,
                         MIGRATION_8_9,
-                        MIGRATION_9_10
+                        MIGRATION_9_10,
+                        MIGRATION_10_11
                     )
                     .fallbackToDestructiveMigration(true)
                     .build()
@@ -209,6 +210,12 @@ abstract class MealDatabase : RoomDatabase() {
                         )
                     }
                 }
+            }
+        }
+
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("UPDATE user_accounts SET passwordHash = ''")
             }
         }
     }

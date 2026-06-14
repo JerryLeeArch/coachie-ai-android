@@ -25,3 +25,30 @@ docs/*.txt
 docs/**/*.mov
 *.docx
 *.pdf
+
+# Environment and secret files
+.env
+.env.*
+*.env
+*.env.*
+google-services.json
+GoogleService-Info.plist
+*credentials*.json
+*secret*.json
+*service-account*.json
+*serviceAccount*.json
+firebase*.json
+
+# Signing keys and certificates
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+*.cer
+*.crt
+
+# User data exports
+coachie-ai-user-data*.json
+*user-data-export*.json
