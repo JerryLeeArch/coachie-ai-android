@@ -18,6 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.jaewonlee.aidietrecord.data.ai.GeminiGoalPlanner
 import com.jaewonlee.aidietrecord.data.ai.GeminiMealAnalyzer
 import com.jaewonlee.aidietrecord.data.local.AuthSessionStore
 import com.jaewonlee.aidietrecord.data.local.MealLogReminderSettings
@@ -80,6 +81,7 @@ fun AIDietNavHost(
             geminiMealAnalyzer = GeminiMealAnalyzer(context.applicationContext)
         )
     }
+    val goalPlanner = remember { GeminiGoalPlanner() }
     val authRepository = remember(mealDatabase) {
         AuthRepository(mealDatabase.authDao())
     }
@@ -768,6 +770,7 @@ fun AIDietNavHost(
                 onManualTargetsEnabledChange = { manualTargetsEnabled = it },
                 currentGoalPlan = activeGoalPlan,
                 latestBodyMeasurement = bodyMeasurements.firstOrNull(),
+                goalPlanner = goalPlanner,
                 onSaveBodyMeasurement = { bodyMeasurementDraft ->
                     if (currentUserId > 0) {
                         coroutineScope.launch {
