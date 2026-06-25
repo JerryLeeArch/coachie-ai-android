@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -37,6 +38,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.jaewonlee.aidietrecord.data.ai.GeminiGoalPlanner
+import com.jaewonlee.aidietrecord.data.ai.GoalPlanAiResult
+import com.jaewonlee.aidietrecord.data.ai.GoalPlanInput
 import com.jaewonlee.aidietrecord.data.model.BodyMeasurementDraft
 import com.jaewonlee.aidietrecord.data.model.BodyMeasurementEntity
 import com.jaewonlee.aidietrecord.data.model.GoalPlanDraft
@@ -48,6 +52,7 @@ import com.jaewonlee.aidietrecord.ui.theme.MacroCarb
 import com.jaewonlee.aidietrecord.ui.theme.MacroFat
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.max
@@ -103,6 +108,7 @@ fun GoalSettingsScreen(
     onManualTargetsEnabledChange: (Boolean) -> Unit,
     currentGoalPlan: GoalPlanEntity?,
     latestBodyMeasurement: BodyMeasurementEntity?,
+    goalPlanner: GeminiGoalPlanner? = null,
     onSaveBodyMeasurement: (BodyMeasurementDraft) -> Unit,
     onSaveClick: (GoalPlanDraft) -> Unit,
     onBackClick: () -> Unit
@@ -122,6 +128,8 @@ fun GoalSettingsScreen(
     var bodyMeasurementError by rememberSaveable { mutableStateOf<String?>(null) }
     var bodySuggestionNotice by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingGoalProposal by remember { mutableStateOf<GoalPlanProposal?>(null) }
+    var isGeneratingProposal by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     val currentWeightIsInvalid = showCurrentWeightError && !currentWeight.hasPositiveNumber()
     val computedGoalEndDate = buildTargetDateFromDuration(goalStartDate, targetWeeks)
     val effectiveGoalEndDate = if (goalPeriodMode == PERIOD_MODE_DURATION) {
@@ -647,8 +655,8 @@ fun GoalSettingsScreen(
                     val parsedCurrentWeight = currentWeight.toPositiveDoubleOrNull()
                     showDateRangeError = parsedDateRange == null
                     showCurrentWeightError = parsedCurrentWeight == null
-                    if (parsedDateRange != null && parsedCurrentWeight != null) {
-                        pendingGoalProposal = buildGoalProposal(
+                    val resolvedInputs = if (parsedDateRange != null && parsedCurrentWeight != null) {
+                        resolveGoalProposalInputs(
                             dateRange = parsedDateRange,
                             currentWeight = currentWeight,
                             currentMuscleMass = currentMuscleMass,
@@ -656,21 +664,40 @@ fun GoalSettingsScreen(
                             currentBodyFatPercent = currentBodyFatPercent,
                             targetWeight = targetWeight,
                             targetMuscleMass = targetMuscleMass,
-                            targetBodyFatPercent = targetBodyFatPercent,
-                            targetCalories = targetCalories,
-                            targetCarbsGram = targetCarbsGram,
-                            proteinGoal = proteinGoal,
-                            targetFatGram = targetFatGram,
-                            targetFiberGram = targetFiberGram,
-                            targetSugarGram = targetSugarGram,
-                            targetSodiumMilligram = targetSodiumMilligram,
-                            manualTargetsEnabled = manualTargetsEnabled
+                            targetBodyFatPercent = targetBodyFatPercent
                         )
+                    } else {
+                        null
+                    }
+                    if (resolvedInputs != null && !isGeneratingProposal) {
+                        isGeneratingProposal = true
+                        coroutineScope.launch {
+                            val aiPlan = goalPlanner?.let { planner ->
+                                runCatching { planner.plan(resolvedInputs.toAiInput()) }
+                                    .getOrNull()
+                            }?.toGoalNutritionPlan()
+                            val nutritionPlan = aiPlan ?: resolvedInputs.localNutritionPlan()
+                            pendingGoalProposal = buildGoalProposal(
+                                resolved = resolvedInputs,
+                                nutritionPlan = nutritionPlan,
+                                aiGenerated = aiPlan != null,
+                                targetCalories = targetCalories,
+                                targetCarbsGram = targetCarbsGram,
+                                proteinGoal = proteinGoal,
+                                targetFatGram = targetFatGram,
+                                targetFiberGram = targetFiberGram,
+                                targetSugarGram = targetSugarGram,
+                                targetSodiumMilligram = targetSodiumMilligram,
+                                manualTargetsEnabled = manualTargetsEnabled
+                            )
+                            isGeneratingProposal = false
+                        }
                     }
                 },
+                enabled = !isGeneratingProposal,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Generate AI Goal Proposal")
+                Text(if (isGeneratingProposal) "Generating AI Plan..." else "Generate AI Goal Proposal")
             }
             }
         }
@@ -1410,7 +1437,19 @@ private fun buildGoalSummary(
     return "Plan to $direction ${formatWeight(totalChange)}kg over $weeks weeks - ${formatWeight(totalChange / weeks)}kg per week."
 }
 
-private fun buildGoalProposal(
+private data class ResolvedGoalInputs(
+    val dateRange: GoalDateRange,
+    val currentWeightKg: Double,
+    val currentMetabolicRate: String,
+    val startMuscleMassKg: Double,
+    val startBodyFatPercent: Double,
+    val targetWeightKg: Double,
+    val targetMuscleMassKg: Double,
+    val targetBodyFatPercent: Double,
+    val estimatedFields: List<String>
+)
+
+private fun resolveGoalProposalInputs(
     dateRange: GoalDateRange,
     currentWeight: String,
     currentMuscleMass: String,
@@ -1418,16 +1457,8 @@ private fun buildGoalProposal(
     currentBodyFatPercent: String,
     targetWeight: String,
     targetMuscleMass: String,
-    targetBodyFatPercent: String,
-    targetCalories: String,
-    targetCarbsGram: String,
-    proteinGoal: String,
-    targetFatGram: String,
-    targetFiberGram: String,
-    targetSugarGram: String,
-    targetSodiumMilligram: String,
-    manualTargetsEnabled: Boolean
-): GoalPlanProposal? {
+    targetBodyFatPercent: String
+): ResolvedGoalInputs? {
     val parsedCurrentWeight = currentWeight.toPositiveDoubleOrNull() ?: return null
     val providedTargetWeight = targetWeight.toPositiveDoubleOrNull()
     val proposedTargetWeight = providedTargetWeight ?: parsedCurrentWeight
@@ -1455,16 +1486,6 @@ private fun buildGoalProposal(
             currentWeightKg = parsedCurrentWeight,
             targetWeightKg = proposedTargetWeight
         )
-    val proposalPlan = buildNutritionPlan(
-        currentWeight = parsedCurrentWeight.toGoalInputText(),
-        currentMuscleMass = proposedStartMuscle.toGoalInputText(),
-        currentMetabolicRate = currentMetabolicRate,
-        currentBodyFatPercent = proposedStartBodyFat.toGoalInputText(),
-        targetWeight = proposedTargetWeight.toGoalInputText(),
-        targetMuscleMass = proposedTargetMuscle.toGoalInputText(),
-        targetBodyFatPercent = proposedTargetBodyFat.toGoalInputText(),
-        targetWeeks = dateRange.durationWeeks.toString()
-    )
     val estimatedFields = buildList {
         if (providedStartMuscle == null) {
             add("current muscle ${proposedStartMuscle.toGoalInputText()}kg")
@@ -1482,9 +1503,70 @@ private fun buildGoalProposal(
             add("target body fat ${proposedTargetBodyFat.toGoalInputText()}%")
         }
     }
+
+    return ResolvedGoalInputs(
+        dateRange = dateRange,
+        currentWeightKg = parsedCurrentWeight,
+        currentMetabolicRate = currentMetabolicRate,
+        startMuscleMassKg = proposedStartMuscle,
+        startBodyFatPercent = proposedStartBodyFat,
+        targetWeightKg = proposedTargetWeight,
+        targetMuscleMassKg = proposedTargetMuscle,
+        targetBodyFatPercent = proposedTargetBodyFat,
+        estimatedFields = estimatedFields
+    )
+}
+
+private fun ResolvedGoalInputs.toAiInput(): GoalPlanInput = GoalPlanInput(
+    currentWeightKg = currentWeightKg,
+    currentMuscleMassKg = startMuscleMassKg,
+    currentBodyFatPercent = startBodyFatPercent,
+    basalMetabolicRateKcal = currentMetabolicRate.toPositiveIntOrNull(),
+    targetWeightKg = targetWeightKg,
+    targetMuscleMassKg = targetMuscleMassKg,
+    targetBodyFatPercent = targetBodyFatPercent,
+    durationWeeks = dateRange.durationWeeks
+)
+
+private fun ResolvedGoalInputs.localNutritionPlan(): GoalNutritionPlan? = buildNutritionPlan(
+    currentWeight = currentWeightKg.toGoalInputText(),
+    currentMuscleMass = startMuscleMassKg.toGoalInputText(),
+    currentMetabolicRate = currentMetabolicRate,
+    currentBodyFatPercent = startBodyFatPercent.toGoalInputText(),
+    targetWeight = targetWeightKg.toGoalInputText(),
+    targetMuscleMass = targetMuscleMassKg.toGoalInputText(),
+    targetBodyFatPercent = targetBodyFatPercent.toGoalInputText(),
+    targetWeeks = dateRange.durationWeeks.toString()
+)
+
+private fun GoalPlanAiResult.toGoalNutritionPlan(): GoalNutritionPlan = GoalNutritionPlan(
+    calories = calories,
+    carbsGram = carbsGram,
+    proteinGram = proteinGram,
+    fatGram = fatGram,
+    fiberGram = fiberGram,
+    sugarGram = sugarGram,
+    sodiumMilligram = sodiumMilligram,
+    summary = summary
+)
+
+private fun buildGoalProposal(
+    resolved: ResolvedGoalInputs,
+    nutritionPlan: GoalNutritionPlan?,
+    aiGenerated: Boolean,
+    targetCalories: String,
+    targetCarbsGram: String,
+    proteinGoal: String,
+    targetFatGram: String,
+    targetFiberGram: String,
+    targetSugarGram: String,
+    targetSodiumMilligram: String,
+    manualTargetsEnabled: Boolean
+): GoalPlanProposal {
+    val dateRange = resolved.dateRange
     val saveManualTargets = manualTargetsEnabled
-    val baseSummary = buildSavedPlanSummary(proposalPlan, saveManualTargets)
-    val planSummary = if (estimatedFields.isEmpty()) {
+    val baseSummary = buildSavedPlanSummary(nutritionPlan, saveManualTargets)
+    val planSummary = if (resolved.estimatedFields.isEmpty()) {
         baseSummary
     } else {
         "$baseSummary Estimated body composition included."
@@ -1494,63 +1576,63 @@ private fun buildGoalProposal(
         draft = GoalPlanDraft(
             validFromEpochDay = dateRange.validFromEpochDay,
             validToEpochDay = dateRange.validToEpochDay,
-            startWeightKg = parsedCurrentWeight,
-            startMuscleMassKg = proposedStartMuscle,
-            startBodyFatPercent = proposedStartBodyFat,
-            targetWeightKg = proposedTargetWeight,
-            targetMuscleMassKg = proposedTargetMuscle,
-            targetBodyFatPercent = proposedTargetBodyFat,
+            startWeightKg = resolved.currentWeightKg,
+            startMuscleMassKg = resolved.startMuscleMassKg,
+            startBodyFatPercent = resolved.startBodyFatPercent,
+            targetWeightKg = resolved.targetWeightKg,
+            targetMuscleMassKg = resolved.targetMuscleMassKg,
+            targetBodyFatPercent = resolved.targetBodyFatPercent,
             dailyCalories = dailyTargetValue(
                 manualValue = targetCalories.toPositiveIntOrNull(),
-                planValue = proposalPlan?.calories,
+                planValue = nutritionPlan?.calories,
                 defaultValue = 2000,
                 useManualValue = saveManualTargets
             ),
             dailyCarbsGram = dailyTargetValue(
                 manualValue = targetCarbsGram.toPositiveIntOrNull(),
-                planValue = proposalPlan?.carbsGram,
+                planValue = nutritionPlan?.carbsGram,
                 defaultValue = 250,
                 useManualValue = saveManualTargets
             ),
             dailyProteinGram = dailyTargetValue(
                 manualValue = proteinGoal.toPositiveIntOrNull(),
-                planValue = proposalPlan?.proteinGram,
+                planValue = nutritionPlan?.proteinGram,
                 defaultValue = 100,
                 useManualValue = saveManualTargets
             ),
             dailyFatGram = dailyTargetValue(
                 manualValue = targetFatGram.toPositiveIntOrNull(),
-                planValue = proposalPlan?.fatGram,
+                planValue = nutritionPlan?.fatGram,
                 defaultValue = 60,
                 useManualValue = saveManualTargets
             ),
             dailyFiberGram = dailyTargetValue(
                 manualValue = targetFiberGram.toPositiveIntOrNull(),
-                planValue = proposalPlan?.fiberGram,
+                planValue = nutritionPlan?.fiberGram,
                 defaultValue = 25,
                 useManualValue = saveManualTargets
             ),
             dailySugarGram = dailyTargetValue(
                 manualValue = targetSugarGram.toPositiveIntOrNull(),
-                planValue = proposalPlan?.sugarGram,
+                planValue = nutritionPlan?.sugarGram,
                 defaultValue = 50,
                 useManualValue = saveManualTargets
             ),
             dailySodiumMilligram = dailyTargetValue(
                 manualValue = targetSodiumMilligram.toPositiveIntOrNull(),
-                planValue = proposalPlan?.sodiumMilligram,
+                planValue = nutritionPlan?.sodiumMilligram,
                 defaultValue = 2300,
                 useManualValue = saveManualTargets
             ),
             planSummary = planSummary,
-            plannerVersion = if (saveManualTargets) {
-                "manual-override-v1"
-            } else {
-                "local-goal-planner-v1"
+            plannerVersion = when {
+                saveManualTargets -> "manual-override-v1"
+                aiGenerated -> "gemini-goal-planner-v1"
+                else -> "local-goal-planner-v1"
             }
         ),
         durationWeeks = dateRange.durationWeeks,
-        estimatedFields = estimatedFields
+        estimatedFields = resolved.estimatedFields
     )
 }
 
@@ -1638,7 +1720,7 @@ private fun buildPlanSummary(
         fatLossPlanned -> "higher protein to protect lean mass during fat loss"
         else -> "balanced macros for steady tracking"
     }
-    return "AI plan: $energyText with $bodyText."
+    return "Local estimate: $energyText with $bodyText."
 }
 
 private fun dailyTargetValue(
